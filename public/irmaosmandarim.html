@@ -87,10 +87,10 @@
              
              <!-- Layout dividido: PDF + Controles -->
              <div id="split-layout" class="hidden">
-                 <!-- Container flex para garantir 50%/50% -->
+                 <!-- Container flex para proporção 70%/30% -->
                  <div class="flex flex-col lg:flex-row h-screen lg:h-auto gap-2">
-                     <!-- Área do PDF (exatamente 50%) -->
-                     <div id="pdf-section" class="w-full lg:w-1/2 flex-shrink-0">
+                     <!-- Área do PDF (70% da largura) -->
+                     <div id="pdf-section" class="w-full lg:w-7/10 flex-shrink-0" style="width: 70%;">
                          <div class="bg-white rounded-lg shadow border border-gray-200 h-full">
                              <div class="p-2 border-b border-gray-200 flex justify-between items-center">
                                  <h3 class="text-sm font-semibold text-gray-700">📖 <span id="pdf-chapter-info"></span></h3>
@@ -101,23 +101,23 @@
                                  </div>
                              </div>
                              <div class="p-1 h-full flex flex-col">
-                                 <canvas id="pdf-canvas" class="border rounded flex-1 w-full" style="max-height: 600px;"></canvas>
-                                 <div id="pdf-loading" class="text-center py-4 text-gray-500 text-sm hidden">
+                                 <canvas id="pdf-canvas" class="border rounded flex-1 w-full" style="max-height: 80vh; min-height: 500px;"></canvas>
+                                 <div id="pdf-loading" class="text-center py-2 text-gray-500 text-sm hidden">
                                      📄 Carregando página...
                                  </div>
                              </div>
                          </div>
                      </div>
                      
-                     <!-- Área dos controles (exatamente 50%) -->
-                     <div id="controls-section" class="w-full lg:w-1/2 flex-shrink-0 flex flex-col">
+                     <!-- Área dos controles (30% da largura) -->
+                     <div id="controls-section" class="w-full lg:w-3/10 flex-shrink-0 flex flex-col" style="width: 30%;">
                          <!-- Painel de Anotações -->
                          <div id="annotations-panel" class="mb-2 bg-white rounded-lg shadow border border-gray-200 flex-shrink-0">
                              <div class="p-2 border-b border-gray-200">
                                  <h3 class="text-sm font-semibold text-gray-700">📝 Anotações do Capítulo</h3>
                              </div>
                              <div class="p-2">
-                                 <textarea id="chapter-annotations" class="w-full h-24 p-2 border border-gray-300 rounded-md resize-none text-xs" 
+                                 <textarea id="chapter-annotations" class="w-full h-16 p-2 border border-gray-300 rounded-md resize-none text-xs" 
                                            placeholder="Digite suas anotações sobre este capítulo..."></textarea>
                                  <div class="mt-1 text-xs text-gray-500">💾 Salvas automaticamente</div>
                              </div>
@@ -150,25 +150,25 @@
         // --- Mapeamento de Páginas dos Capítulos ---
         const chapterPageMapping = {
             0: { // Livro 1
-                0: { startPage: 10, endPage: 25 },   // Introdução
-                1: { startPage: 26, endPage: 45 },   // 你是巴西人吗?
-                2: { startPage: 46, endPage: 65 },   // 你有书吗?
-                3: { startPage: 66, endPage: 85 },   // 他们是谁?
-                4: { startPage: 86, endPage: 105 },  // 你学习汉语吗?
-                5: { startPage: 106, endPage: 125 }, // 今天几月几号?
-                6: { startPage: 126, endPage: 145 }, // 你几点起床?
-                7: { startPage: 146, endPage: 165 }, // 请问,学校在哪里?
-                8: { startPage: 166, endPage: 185 }  // 你的房间里有什么?
+                0: { startPage: 1, endPage: 15 },    // Introdução
+                1: { startPage: 16, endPage: 30 },   // 你是巴西人吗?
+                2: { startPage: 31, endPage: 45 },   // 你有书吗?
+                3: { startPage: 46, endPage: 60 },   // 他们是谁?
+                4: { startPage: 61, endPage: 75 },   // 你学习汉语吗?
+                5: { startPage: 76, endPage: 90 },   // 今天几月几号?
+                6: { startPage: 91, endPage: 105 },  // 你几点起床?
+                7: { startPage: 106, endPage: 120 }, // 请问,学校在哪里?
+                8: { startPage: 121, endPage: 135 }  // 你的房间里有什么?
             },
             1: { // Livro 2  
-                9: { startPage: 10, endPage: 30 },   // 你想喝什么?
-                10: { startPage: 31, endPage: 50 },  // 这个多少钱?
-                11: { startPage: 51, endPage: 70 },  // 我去买东西
-                12: { startPage: 71, endPage: 90 },  // 我们怎么去他的家?
-                13: { startPage: 91, endPage: 110 }, // 我跟朋友一起吃午饭
-                14: { startPage: 111, endPage: 130 }, // 她不能去,她要休息
-                15: { startPage: 131, endPage: 150 }, // 从这里到长城怎么去?
-                16: { startPage: 151, endPage: 170 }  // 你在做什么呢?
+                9: { startPage: 1, endPage: 15 },    // 你想喝什么?
+                10: { startPage: 16, endPage: 30 },  // 这个多少钱?
+                11: { startPage: 31, endPage: 45 },  // 我去买东西
+                12: { startPage: 46, endPage: 60 },  // 我们怎么去他的家?
+                13: { startPage: 61, endPage: 75 },  // 我跟朋友一起吃午饭
+                14: { startPage: 76, endPage: 90 },  // 她不能去,她要休息
+                15: { startPage: 91, endPage: 105 }, // 从这里到长城怎么去?
+                16: { startPage: 106, endPage: 120 } // 你在做什么呢?
             }
         };
 
@@ -1059,6 +1059,19 @@
                 pdfDoc = await loadingTask.promise;
                 
                 console.log(`PDF carregado. Total de páginas: ${pdfDoc.numPages}`);
+                
+                // Validar se as páginas do capítulo existem no PDF
+                if (startPage > pdfDoc.numPages) {
+                    console.error(`Página inicial ${startPage} não existe no PDF (total: ${pdfDoc.numPages})`);
+                    alert(`Erro: Página ${startPage} não encontrada no PDF. O arquivo pode estar incompleto.`);
+                    return;
+                }
+                
+                // Ajustar endPage se for maior que o total de páginas
+                if (endPage > pdfDoc.numPages) {
+                    console.warn(`Página final ${endPage} ajustada para ${pdfDoc.numPages}`);
+                    endPage = pdfDoc.numPages;
+                }
                 
                 // Renderizar primeira página do capítulo
                 await renderPage(currentPage);
