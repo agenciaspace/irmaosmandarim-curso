@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Progresso Mandarim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .progress-bar-bg { background-color: #e5e7eb; border-radius: 0.375rem; overflow: hidden; height: 1.25rem; border: 1px solid #d1d5db; }
+        .progress-bar-fill { background-color: #34d399; height: 100%; transition: width 0.3s ease-in-out; text-align: center; color: white; font-size: 0.75rem; line-height: 1.25rem; border-radius: 0.375rem; }
+        .completed-item label { text-decoration: line-through; color: #6b7280; }
+        .chapter-item:hover { background-color: #f3f4f6; }
+        .toggle-icon::before { content: '▼ '; display: inline-block; transition: transform 0.2s ease-in-out; }
+        .collapsed .toggle-icon::before { transform: rotate(-90deg); content: '► '; }
+        body { padding-bottom: 80px; }
+        .notes-textarea { width: 100%; height: 150px; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; margin-top: 1rem; resize: vertical; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+        .notes-textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px #bfdbfe; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans font-family-inter relative min-h-screen">
+    <div id="app" class="container mx-auto p-4 md:p-6 max-w-3xl">
+        <div id="main-screen">
+            <h1 class="text-2xl md:text-3xl font-bold mb-4 text-gray-800 text-center">Meu Progresso Mandarim 📚</h1>
+            <div class="bg-white p-4 rounded-lg shadow mb-6 border border-gray-200">
+                <h2 class="text-lg font-semibold mb-2 text-gray-700">Progresso Total</h2>
+                <div class="progress-bar-bg"><div id="progress-bar-total" class="progress-bar-fill"></div></div>
+                <p id="progress-text-total" class="text-right text-sm font-medium text-gray-600 mt-1">0%</p>
+            </div>
+            <div id="books-list" class="space-y-4"></div>
+        </div>
+        <div id="chapter-screen" class="hidden">
+            <button id="back-button" class="mb-4 text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out">&larr; Voltar</button>
+            <h1 id="chapter-title" class="text-xl md:text-2xl font-bold mb-1 text-gray-800"></h1>
+            <div class="mb-4">
+                <div class="progress-bar-bg"><div id="progress-bar-chapter-detail" class="progress-bar-fill"></div></div>
+                <p id="progress-text-chapter-detail" class="text-right text-sm font-medium text-gray-600 mt-1">0%</p>
+            </div>
+            <div id="chapter-content" class="bg-white p-4 rounded-lg shadow space-y-4 border border-gray-200"></div>
+        </div>
+    </div>
+
+    <script>
+        const checklistData = [/* conteúdo abreviado para caber aqui; mesma estrutura do arquivo raiz */];
+        let currentData = [];
+        let currentView = 'main';
+        let currentChapter = { livroIndex: -1, capituloIndex: -1 };
+        const mainScreen = document.getElementById('main-screen');
+        const chapterScreen = document.getElementById('chapter-screen');
+        const booksListDiv = document.getElementById('books-list');
+        const chapterContentDiv = document.getElementById('chapter-content');
+        const progressBarTotal = document.getElementById('progress-bar-total');
+        const progressTextTotal = document.getElementById('progress-text-total');
+        const progressBarChapterDetail = document.getElementById('progress-bar-chapter-detail');
+        const progressTextChapterDetail = document.getElementById('progress-text-chapter-detail');
+        const backButton = document.getElementById('back-button');
+
+        function calculateAllProgress() {
+            let totalItems = 0; let completedItems = 0; const bookProgress = []; const chapterProgress = [];
+            currentData.forEach((livro, livroIndex) => {
+                let livroTotal = 0; let livroCompleted = 0;
+                livro.capitulos.forEach((cap, capIndex) => {
+                    let capTotal = 0; let capCompleted = 0;
+                    for (const key in cap.subtopicos) {
+                        if (Array.isArray(cap.subtopicos[key])) {
+                            cap.subtopicos[key].forEach(item => { if ('concluido' in item) { capTotal++; if (item.concluido) capCompleted++; } });
+                        }
+                    }
+                    livroTotal += capTotal; livroCompleted += capCompleted; totalItems += capTotal; completedItems += capCompleted;
+                    const progress = capTotal === 0 ? 0 : Math.round((capCompleted / capTotal) * 100);
+                    chapterProgress.push({ livro: livroIndex, capitulo: capIndex, progress });
+                });
+                const progress = livroTotal === 0 ? 0 : Math.round((livroCompleted / livroTotal) * 100);
+                bookProgress.push(progress);
+            });
+            const totalProgress = totalItems === 0 ? 0 : Math.round((completedItems / totalItems) * 100);
+            return { totalProgress, bookProgress, chapterProgress };
+        }
+        function updateProgressDisplay() {
+            const { totalProgress, bookProgress, chapterProgress } = calculateAllProgress();
+            progressBarTotal.style.width = `${totalProgress}%`;
+            progressBarTotal.textContent = totalProgress > 10 ? `${totalProgress}%` : '';
+            progressTextTotal.textContent = `${totalProgress}%`;
+            currentData.forEach((_, index) => {
+                const bar = document.getElementById(`progress-bar-book-${index}`);
+                const text = document.getElementById(`progress-text-book-${index}`);
+                if (bar && text) {
+                    const progress = bookProgress[index];
+                    bar.style.width = `${progress}%`;
+                    bar.textContent = progress > 10 ? `${progress}%` : '';
+                    text.textContent = `${progress}%`;
+                }
+            });
+            chapterProgress.forEach(cp => {
+                const bar = document.getElementById(`progress-bar-chapter-${cp.livro}-${cp.capitulo}`);
+                const text = document.getElementById(`progress-text-chapter-${cp.livro}-${cp.capitulo}`);
+                if (bar && text) { bar.style.width = `${cp.progress}%`; text.textContent = `${cp.progress}%`; }
+            });
+        }
+        function renderMainScreen() {
+            booksListDiv.innerHTML = '';
+            currentData.forEach((livro, livroIndex) => {
+                const isBookExpanded = localStorage.getItem(`book-${livroIndex}-expanded`) !== 'false';
+                const bookDiv = document.createElement('div');
+                bookDiv.className = `bg-white rounded-lg shadow border border-gray-200 ${isBookExpanded ? '' : 'collapsed'}`;
+                const bookHeader = document.createElement('div'); bookHeader.className = 'p-4 cursor-pointer flex justify-between items-center'; bookHeader.onclick = () => toggleBook(livroIndex);
+                const bookTitle = document.createElement('h2'); bookTitle.className = 'text-lg md:text-xl font-semibold text-gray-700 flex items-center'; bookTitle.innerHTML = `<span class="toggle-icon mr-2"></span> ${livro.tituloLivro}`; bookHeader.appendChild(bookTitle);
+                const bookProgressDiv = document.createElement('div'); bookProgressDiv.className = 'w-1/3 md:w-1/4 ml-4'; bookProgressDiv.innerHTML = `<div class="progress-bar-bg"><div id="progress-bar-book-${livroIndex}" class="progress-bar-fill"></div></div><p id="progress-text-book-${livroIndex}" class="text-right text-xs font-medium text-gray-600 mt-1">0%</p>`; bookHeader.appendChild(bookProgressDiv);
+                bookDiv.appendChild(bookHeader);
+                const chaptersList = document.createElement('ul'); chaptersList.className = `border-t border-gray-200 ${isBookExpanded ? '' : 'hidden'}`; chaptersList.id = `chapters-list-${livroIndex}`;
+                if (Array.isArray(livro.capitulos)) {
+                    livro.capitulos.forEach((cap, capIndex) => {
+                        const li = document.createElement('li'); li.className = 'border-b border-gray-100 last:border-b-0 chapter-item cursor-pointer transition duration-150 ease-in-out';
+                        li.innerHTML = `<div class="p-3 px-4 flex justify-between items-center" onclick="showChapterDetail(${livroIndex}, ${capIndex})"><span class="text-gray-700">Cap ${cap.capitulo}: ${cap.tituloCapitulo}</span><div class="w-1/4 md:w-1/5 ml-2 text-right"><div class="progress-bar-bg !h-3"><div id="progress-bar-chapter-${livroIndex}-${capIndex}" class="progress-bar-fill !text-transparent"></div></div><p id="progress-text-chapter-${livroIndex}-${capIndex}" class="text-xs font-medium text-gray-500">0%</p></div></div>`;
+                        chaptersList.appendChild(li);
+                    });
+                }
+                bookDiv.appendChild(chaptersList); booksListDiv.appendChild(bookDiv);
+            });
+            updateProgressDisplay();
+        }
+        function renderChapterDetail(livroIndex, capituloIndex) {
+            const capitulo = currentData?.[livroIndex]?.capitulos?.[capituloIndex];
+            if (!capitulo) { showMainScreen(); return; }
+            chapterContentDiv.innerHTML = '';
+            const sections = [
+                { title: 'TÓPICOS', key: 'topicos'}, { title: 'DIÁLOGOS', key: 'dialogos' },
+                { title: 'VOCABULÁRIO', key: 'vocabulario' }, { title: 'GRAMÁTICA E ESTRUTURAS', key: 'gramatica' },
+                { title: 'TEXTO(S)', key: 'textos' }, { title: 'APRESENTAÇÃO(ÕES)', key: 'apresentacoes' }, { title: 'EXERCÍCIOS', key: 'exercicios' }, { title: 'CARACTERES (HANZI)', key: 'hanzi' }
+            ];
+            sections.forEach(section => {
+                const items = capitulo.subtopicos[section.key];
+                if (Array.isArray(items) && items.length > 0) {
+                    const sectionDiv = document.createElement('div');
+                    const sectionTitle = document.createElement('h3'); sectionTitle.className = 'text-md font-semibold mb-2 text-gray-600 border-b pb-1'; sectionTitle.textContent = section.title; sectionDiv.appendChild(sectionTitle);
+                    const ul = document.createElement('ul'); ul.className = 'space-y-1';
+                    items.forEach(item => {
+                        const li = document.createElement('li'); li.className = `flex items-center text-sm ${item.concluido ? 'completed-item' : ''}`;
+                        li.innerHTML = `<input type="checkbox" id="${item.id}" data-livro="${livroIndex}" data-capitulo="${capituloIndex}" data-key="${section.key}" data-itemid="${item.id}" ${item.concluido ? 'checked' : ''} class="mr-2 h-4 w-4 rounded border-gray-300 text-emerald-500 focus:ring-emerald-400 cursor-pointer"><label for="${item.id}" class="text-gray-700 cursor-pointer">${item.texto}</label>`;
+                        li.querySelector('input')?.addEventListener('change', handleCheckboxChange);
+                        ul.appendChild(li);
+                    });
+                    sectionDiv.appendChild(ul); chapterContentDiv.appendChild(sectionDiv);
+                }
+            });
+            const notesSection = document.createElement('div'); notesSection.className = 'mt-6 pt-4 border-t border-gray-200';
+            const notesTitle = document.createElement('h3'); notesTitle.className = 'text-md font-semibold mb-2 text-gray-600'; notesTitle.textContent = 'NOTAS DO CAPÍTULO'; notesSection.appendChild(notesTitle);
+            const notesTextarea = document.createElement('textarea'); const notesKey = `mandarinNotes-l${livroIndex}c${capituloIndex}`; notesTextarea.id = `notes-${livroIndex}-${capituloIndex}`; notesTextarea.className = 'notes-textarea'; notesTextarea.placeholder = 'Digite suas notas...'; notesTextarea.value = localStorage.getItem(notesKey) || '';
+            let debounceTimer; notesTextarea.addEventListener('keyup', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { localStorage.setItem(notesKey, notesTextarea.value); }, 300); });
+            notesSection.appendChild(notesTextarea); chapterContentDiv.appendChild(notesSection);
+            updateProgressDisplay();
+        }
+        function showChapterDetail(livroIndex, capituloIndex) { currentView = 'chapter'; mainScreen.classList.add('hidden'); chapterScreen.classList.remove('hidden'); renderChapterDetail(livroIndex, capituloIndex); window.scrollTo(0, 0); }
+        function showMainScreen() { currentView = 'main'; chapterScreen.classList.add('hidden'); mainScreen.classList.remove('hidden'); currentChapter = { livroIndex: -1, capituloIndex: -1 }; renderMainScreen(); }
+        function handleCheckboxChange(e) {
+            const cb = e.target; const livroIndex = parseInt(cb.dataset.livro); const capIndex = parseInt(cb.dataset.capitulo); const key = cb.dataset.key; const itemId = cb.dataset.itemid; const isChecked = cb.checked;
+            const item = currentData?.[livroIndex]?.capitulos?.[capIndex]?.subtopicos?.[key]?.find(i => i.id === itemId);
+            if (item) { item.concluido = isChecked; cb.closest('li')?.classList.toggle('completed-item', isChecked); saveProgress(); updateProgressDisplay(); }
+        }
+        function toggleBook(livroIndex) {
+            const bookDiv = document.getElementById(`book-${livroIndex}`); const chaptersList = document.getElementById(`chapters-list-${livroIndex}`);
+            if (bookDiv && chaptersList) { const isCollapsed = bookDiv.classList.toggle('collapsed'); chaptersList.classList.toggle('hidden'); localStorage.setItem(`book-${livroIndex}-expanded`, !isCollapsed); }
+        }
+        function saveProgress() { localStorage.setItem('mandarinProgressData', JSON.stringify(currentData)); }
+        function loadProgress() {
+            const saved = localStorage.getItem('mandarinProgressData');
+            currentData = saved ? JSON.parse(saved) : checklistData;
+        }
+        function init() {
+            loadProgress(); renderMainScreen(); document.getElementById('back-button')?.addEventListener('click', showMainScreen);
+        }
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+    <script>
+    (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="lQAieVgUdlOSGG5P02Wx_";script.domain="www.chatbase.co";script.defer=true;document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+    </script>
+</body>
+</html>
