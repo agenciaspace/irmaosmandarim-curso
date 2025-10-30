@@ -85,44 +85,45 @@
              
              <!-- Layout dividido: PDF + Controles -->
              <div id="split-layout" class="hidden">
-                 <!-- Área do PDF (lado esquerdo) -->
-                 <div class="flex flex-col lg:flex-row gap-4">
-                     <div id="pdf-section" class="lg:w-1/2">
-                         <div class="bg-white rounded-lg shadow border border-gray-200">
-                             <div class="p-3 border-b border-gray-200 flex justify-between items-center">
-                                 <h3 class="text-md font-semibold text-gray-700">📖 <span id="pdf-chapter-info"></span></h3>
-                                 <div class="flex gap-2">
-                                     <button id="prev-page" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm">‹ Anterior</button>
-                                     <span id="page-info" class="text-sm text-gray-600"></span>
-                                     <button id="next-page" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm">Próxima ›</button>
+                 <!-- Container flex para garantir 50%/50% -->
+                 <div class="flex flex-col lg:flex-row h-screen lg:h-auto gap-2">
+                     <!-- Área do PDF (exatamente 50%) -->
+                     <div id="pdf-section" class="w-full lg:w-1/2 flex-shrink-0">
+                         <div class="bg-white rounded-lg shadow border border-gray-200 h-full">
+                             <div class="p-2 border-b border-gray-200 flex justify-between items-center">
+                                 <h3 class="text-sm font-semibold text-gray-700">📖 <span id="pdf-chapter-info"></span></h3>
+                                 <div class="flex gap-1">
+                                     <button id="prev-page" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-xs">‹ Ant</button>
+                                     <span id="page-info" class="text-xs text-gray-600"></span>
+                                     <button id="next-page" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-xs">Prox ›</button>
                                  </div>
                              </div>
-                             <div class="p-2">
-                                 <iframe id="pdf-frame" src="" width="100%" height="500" class="border rounded"></iframe>
+                             <div class="p-1 h-full">
+                                 <iframe id="pdf-frame" src="" width="100%" height="600" class="border rounded h-full"></iframe>
                              </div>
                          </div>
                      </div>
                      
-                     <!-- Área dos controles (lado direito) -->
-                     <div id="controls-section" class="lg:w-1/2">
+                     <!-- Área dos controles (exatamente 50%) -->
+                     <div id="controls-section" class="w-full lg:w-1/2 flex-shrink-0 flex flex-col">
                          <!-- Painel de Anotações -->
-                         <div id="annotations-panel" class="mb-4 bg-white rounded-lg shadow border border-gray-200">
-                             <div class="p-3 border-b border-gray-200">
-                                 <h3 class="text-md font-semibold text-gray-700">📝 Anotações do Capítulo</h3>
+                         <div id="annotations-panel" class="mb-2 bg-white rounded-lg shadow border border-gray-200 flex-shrink-0">
+                             <div class="p-2 border-b border-gray-200">
+                                 <h3 class="text-sm font-semibold text-gray-700">📝 Anotações do Capítulo</h3>
                              </div>
-                             <div class="p-3">
-                                 <textarea id="chapter-annotations" class="w-full h-32 p-3 border border-gray-300 rounded-md resize-vertical text-sm" 
+                             <div class="p-2">
+                                 <textarea id="chapter-annotations" class="w-full h-24 p-2 border border-gray-300 rounded-md resize-none text-xs" 
                                            placeholder="Digite suas anotações sobre este capítulo..."></textarea>
-                                 <div class="mt-2 text-xs text-gray-500">💾 Salvas automaticamente</div>
+                                 <div class="mt-1 text-xs text-gray-500">💾 Salvas automaticamente</div>
                              </div>
                          </div>
                          
                          <!-- Conteúdo do checklist -->
-                         <div id="chapter-content-split" class="bg-white rounded-lg shadow border border-gray-200 max-h-96 overflow-y-auto">
-                             <div class="p-3 border-b border-gray-200">
-                                 <h3 class="text-md font-semibold text-gray-700">📋 Checklist do Capítulo</h3>
+                         <div id="chapter-content-split" class="bg-white rounded-lg shadow border border-gray-200 flex-1 overflow-y-auto">
+                             <div class="p-2 border-b border-gray-200">
+                                 <h3 class="text-sm font-semibold text-gray-700">📋 Checklist do Capítulo</h3>
                              </div>
-                             <div class="p-3 space-y-3">
+                             <div class="p-2 space-y-2">
                                  <!-- Conteúdo será gerado aqui -->
                              </div>
                          </div>
@@ -999,11 +1000,16 @@
             
             // Obter informações do capítulo
             const livroNumber = currentChapter.livroIndex + 1;
-            const capituloNumber = currentChapter.capituloIndex;
+            const capitulo = currentData[currentChapter.livroIndex].capitulos[currentChapter.capituloIndex];
+            const capituloNumber = capitulo.capitulo; // Usar o número real do capítulo, não o índice
             const pageMapping = chapterPageMapping[currentChapter.livroIndex];
             
+            console.log(`Debug: livroIndex=${currentChapter.livroIndex}, capituloIndex=${currentChapter.capituloIndex}, capituloNumber=${capituloNumber}`);
+            console.log('pageMapping:', pageMapping);
+            
             if (!pageMapping || !pageMapping[capituloNumber]) {
-                alert('Mapeamento de páginas não encontrado para este capítulo.');
+                alert(`Mapeamento de páginas não encontrado para Livro ${livroNumber}, Capítulo ${capituloNumber}.`);
+                console.error('Mapeamento não encontrado:', {livroIndex: currentChapter.livroIndex, capituloNumber});
                 return;
             }
             
@@ -1018,7 +1024,6 @@
             loadPdfPage();
             
             // Configurar interface
-            const capitulo = currentData[currentChapter.livroIndex].capitulos[currentChapter.capituloIndex];
             pdfChapterInfo.textContent = `${capitulo.tituloCapitulo} (Páginas ${startPage}-${endPage})`;
             
             // Renderizar checklist no layout dividido
