@@ -1543,12 +1543,24 @@
                 
                 // Carregar PDF principal após renderização
                 setTimeout(() => {
-                    console.log('Iniciando carregamento do PDF principal...');
-                    console.log('Verificando elementos do layout dividido...');
-                    console.log('main-screen visible:', document.getElementById('main-screen')?.style.display !== 'none');
-                    console.log('PDF area visible:', document.querySelector('.lg\\:w-1\\/2')?.offsetHeight > 0);
-                    loadMainPdf();
-                }, 500);
+                    console.log('🔍 Iniciando carregamento do PDF principal...');
+                    
+                    const mainScreen = document.getElementById('main-screen');
+                    const pdfArea = document.querySelector('div.w-1\\/2');
+                    const mainPdfCanvas = document.getElementById('main-pdf-canvas');
+                    
+                    console.log('✅ main-screen found:', !!mainScreen);
+                    console.log('✅ PDF area found:', !!pdfArea);
+                    console.log('✅ main-pdf-canvas found:', !!mainPdfCanvas);
+                    console.log('✅ main-screen visible:', mainScreen && !mainScreen.classList.contains('hidden'));
+                    
+                    if (mainPdfCanvas) {
+                        console.log('🚀 Chamando loadMainPdf...');
+                        loadMainPdf();
+                    } else {
+                        console.error('❌ main-pdf-canvas não encontrado!');
+                    }
+                }, 1000);
                 
                 console.log('=== APLICATIVO INICIADO COM SUCESSO ===');
                 
