@@ -78,8 +78,8 @@
                     </div>
                     <div class="p-2 flex flex-col" style="height: 70vh;">
                         <canvas id="main-pdf-canvas" class="border rounded flex-1 w-full"></canvas>
-                        <div id="main-pdf-loading" class="text-center py-4 text-gray-500 text-sm hidden">
-                            📄 Carregando PDF...
+                        <div id="main-pdf-loading" class="text-center py-4 text-gray-500 text-sm">
+                            📄 Aguardando carregamento do PDF...
                         </div>
                     </div>
                 </div>
@@ -804,8 +804,10 @@
             }
             
             try {
-                mainPdfLoading.classList.remove('hidden');
-                mainPdfLoading.textContent = '📄 Carregando PDF principal...';
+                if (mainPdfLoading) {
+                    mainPdfLoading.classList.remove('hidden');
+                    mainPdfLoading.textContent = '📄 Carregando PDF principal...';
+                }
                 
                 // Carregar Livro 1 como padrão
                 const pdfUrl = 'Livro 1 - Irmãos Mandarim.pdf';
@@ -1538,8 +1540,11 @@
                 // Carregar PDF principal após renderização
                 setTimeout(() => {
                     console.log('Iniciando carregamento do PDF principal...');
+                    console.log('Verificando elementos do layout dividido...');
+                    console.log('main-screen visible:', document.getElementById('main-screen')?.style.display !== 'none');
+                    console.log('PDF area visible:', document.querySelector('.lg\\:w-1\\/2')?.offsetHeight > 0);
                     loadMainPdf();
-                }, 100);
+                }, 500);
                 
                 console.log('=== APLICATIVO INICIADO COM SUCESSO ===');
                 
