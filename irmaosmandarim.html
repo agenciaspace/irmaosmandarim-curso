@@ -102,75 +102,9 @@
                  </div>
              </div>
              
-             <!-- Botões de ação -->
-             <div class="mb-4 flex gap-2 flex-wrap">
-                 <button id="show-pdf-button" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm transition">
-                     📖 <span class="hidden sm:inline">Ver</span> PDF
-                 </button>
-                 <button id="toggle-annotations-button" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm transition">
-                     📝 <span class="hidden sm:inline">Anotações</span>
-                 </button>
-                 <button id="hide-pdf-button" class="hidden bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm transition">
-                     ✕ <span class="hidden sm:inline">Fechar PDF</span>
-                 </button>
-             </div>
-             
-             <!-- Layout dividido: PDF + Controles -->
-             <div id="split-layout" class="hidden">
-                 <!-- Container flex para proporção 70%/30% -->
-                 <div class="flex flex-col lg:flex-row h-screen lg:h-auto gap-2">
-                     <!-- Área do PDF (70% da largura) -->
-                     <div id="pdf-section" class="w-full lg:w-7/10 flex-shrink-0" style="width: 70%;">
-                         <div class="bg-white rounded-lg shadow border border-gray-200 h-full">
-                             <div class="p-2 border-b border-gray-200 flex justify-between items-center">
-                                 <h3 class="text-sm font-semibold text-gray-700">📖 <span id="pdf-chapter-info"></span></h3>
-                                 <div class="flex gap-1">
-                                     <button id="prev-page" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-xs">‹ Ant</button>
-                                     <span id="page-info" class="text-xs text-gray-600"></span>
-                                     <button id="next-page" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-xs">Prox ›</button>
-                                 </div>
-                             </div>
-                             <div class="p-1 h-full flex flex-col">
-                                 <canvas id="pdf-canvas" class="border rounded flex-1 w-full" style="max-height: 80vh; min-height: 500px;"></canvas>
-                                 <div id="pdf-loading" class="text-center py-2 text-gray-500 text-sm hidden">
-                                     📄 Carregando página...
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                     
-                     <!-- Área dos controles (30% da largura) -->
-                     <div id="controls-section" class="w-full lg:w-3/10 flex-shrink-0 flex flex-col" style="width: 30%;">
-                         <!-- Painel de Anotações -->
-                         <div id="annotations-panel" class="mb-2 bg-white rounded-lg shadow border border-gray-200 flex-shrink-0">
-                             <div class="p-2 border-b border-gray-200">
-                                 <h3 class="text-sm font-semibold text-gray-700">📝 Anotações do Capítulo</h3>
-                             </div>
-                             <div class="p-2">
-                                 <textarea id="chapter-annotations" class="w-full h-16 p-2 border border-gray-300 rounded-md resize-none text-xs" 
-                                           placeholder="Digite suas anotações sobre este capítulo..."></textarea>
-                                 <div class="mt-1 text-xs text-gray-500">💾 Salvas automaticamente</div>
-                             </div>
-                         </div>
-                         
-                         <!-- Conteúdo do checklist -->
-                         <div id="chapter-content-split" class="bg-white rounded-lg shadow border border-gray-200 flex-1 overflow-y-auto">
-                             <div class="p-2 border-b border-gray-200">
-                                 <h3 class="text-sm font-semibold text-gray-700">📋 Checklist do Capítulo</h3>
-                             </div>
-                             <div class="p-2 space-y-2">
-                                 <!-- Conteúdo será gerado aqui -->
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-             </div>
-             
-             <!-- Layout tradicional (quando PDF não está visível) -->
-             <div id="traditional-layout">
-                 <div id="chapter-content" class="bg-white p-4 rounded-lg shadow space-y-4 border border-gray-200">
-                     <!-- Conteúdo do checklist é gerado aqui -->
-                 </div>
+             <!-- Layout tradicional: apenas checklist -->
+             <div id="chapter-content" class="bg-white p-4 rounded-lg shadow space-y-4 border border-gray-200">
+                 <!-- Conteúdo do checklist é gerado aqui -->
              </div>
         </div>
     </div>
@@ -991,6 +925,7 @@
                 }
             }
         });
+        */
 
         // --- Funções do Checklist COMPLETAS ---
          function calculateSubtopicProgress(subtopicosObj) {
@@ -1241,7 +1176,8 @@
         // --- Configuração do PDF.js ---
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
-        // --- Funções do PDF Viewer e Anotações ---
+        // --- Funções do PDF Viewer e Anotações (REMOVIDAS) ---
+        /*
         async function showPdfViewer() {
             if (currentChapter.livroIndex === -1 || currentChapter.capituloIndex === -1) return;
             
@@ -1384,7 +1320,9 @@
             
             console.log('PDF fechado');
         }
+        */
         
+        /*
         async function prevPage() {
             if (currentPage > startPage) {
                 currentPage--;
@@ -1573,22 +1511,7 @@
                  console.error("Back button not found");
             }
             
-            // Event listeners para PDF viewer e anotações
-            if(showPdfButton) {
-                showPdfButton.addEventListener('click', showPdfViewer);
-            }
-            
-            if(hidePdfButton) {
-                hidePdfButton.addEventListener('click', hidePdfViewer);
-            }
-            
-            if(prevPageButton) {
-                prevPageButton.addEventListener('click', prevPage);
-            }
-            
-            if(nextPageButton) {
-                nextPageButton.addEventListener('click', nextPage);
-            }
+            // Event listeners para PDF viewer removidos (focando apenas no PDF principal)
             
             // Auto-save para anotações
             if(chapterAnnotationsTextarea) {
