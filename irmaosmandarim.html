@@ -1089,9 +1089,35 @@
         function renderChapterContentSplit() {
             if (currentChapter.livroIndex === -1 || currentChapter.capituloIndex === -1) return;
             
+            console.log('Renderizando checklist dividido...');
+            
             const capitulo = currentData[currentChapter.livroIndex].capitulos[currentChapter.capituloIndex];
-            const contentDiv = chapterContentSplit.querySelector('.p-3.space-y-3');
+            
+            // Verifica se o elemento principal existe
+            if (!chapterContentSplit) {
+                console.error('chapterContentSplit não encontrado');
+                return;
+            }
+            
+            // Procura pelo div de conteúdo
+            let contentDiv = chapterContentSplit.querySelector('.p-2.space-y-2');
+            
+            if (!contentDiv) {
+                console.log('Div de conteúdo não encontrado, tentando criar...');
+                // Se não encontrou, tenta o div pai e procura estrutura alternativa
+                const parentDiv = chapterContentSplit.querySelector('div');
+                if (parentDiv && parentDiv.children.length > 1) {
+                    contentDiv = parentDiv.children[1]; // O segundo div deve ser o conteúdo
+                }
+            }
+            
+            if (!contentDiv) {
+                console.error('Não foi possível encontrar ou criar div de conteúdo');
+                return;
+            }
+            
             contentDiv.innerHTML = '';
+            console.log('Limpou conteúdo, iniciando renderização...');
             
             const subtopicSections = [
                 { title: 'TÓPICOS', key: 'topicos'},
