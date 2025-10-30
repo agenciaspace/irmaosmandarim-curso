@@ -42,23 +42,53 @@
 
     <!-- Conteúdo Principal do Checklist (Inalterado) -->
     <div id="app" class="container mx-auto p-4 md:p-6 max-w-3xl">
-        <!-- Tela Principal -->
+        <!-- Nova Tela Principal - Layout Dividido -->
         <div id="main-screen">
-            <h1 class="text-2xl md:text-3xl font-bold mb-4 text-gray-800 text-center">Meu Progresso Mandarim 📚</h1>
-            
-            
-            <div class="bg-white p-4 rounded-lg shadow mb-6 border border-gray-200">
-                <h2 class="text-lg font-semibold mb-2 text-gray-700">Progresso Total</h2>
-                <div class="progress-bar-bg"><div id="progress-bar-total" class="progress-bar-fill"></div></div>
-                <p id="progress-text-total" class="text-right text-sm font-medium text-gray-600 mt-1">0%</p>
+            <!-- Cabeçalho -->
+            <div class="mb-4">
+                <h1 class="text-xl md:text-2xl font-bold mb-2 text-gray-800 text-center">Meu Progresso Mandarim 📚</h1>
+                <div class="bg-white p-3 rounded-lg shadow border border-gray-200">
+                    <h2 class="text-md font-semibold mb-2 text-gray-700">Progresso Total</h2>
+                    <div class="progress-bar-bg"><div id="progress-bar-total" class="progress-bar-fill"></div></div>
+                    <p id="progress-text-total" class="text-right text-sm font-medium text-gray-600 mt-1">0%</p>
+                </div>
             </div>
-            
+
             <!-- Status de carregamento -->
-            <div id="loading-status" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-                <p>🔄 Carregando dados...</p>
+            <div id="loading-status" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-2 rounded mb-4">
+                <p class="text-sm">🔄 Carregando dados...</p>
             </div>
             
-            <div id="books-list" class="space-y-4"></div>
+            <!-- Layout Principal Dividido -->
+            <div class="flex flex-col lg:flex-row gap-4 h-screen lg:h-auto">
+                <!-- Área do PDF (50%) -->
+                <div class="w-full lg:w-1/2 bg-white rounded-lg shadow border border-gray-200">
+                    <div class="p-3 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-md font-semibold text-gray-700">📖 <span id="main-pdf-info">Selecione um livro</span></h3>
+                        <div class="flex gap-2">
+                            <select id="book-selector" class="text-sm border border-gray-300 rounded px-2 py-1">
+                                <option value="">Selecione o Livro</option>
+                                <option value="0">Livro 1</option>
+                                <option value="1">Livro 2</option>
+                            </select>
+                            <button id="prev-page-main" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-xs">‹ Ant</button>
+                            <span id="page-info-main" class="text-xs text-gray-600">-</span>
+                            <button id="next-page-main" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-xs">Prox ›</button>
+                        </div>
+                    </div>
+                    <div class="p-2 flex flex-col" style="height: 70vh;">
+                        <canvas id="main-pdf-canvas" class="border rounded flex-1 w-full"></canvas>
+                        <div id="main-pdf-loading" class="text-center py-4 text-gray-500 text-sm hidden">
+                            📄 Carregando PDF...
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Área dos Controles (50%) -->
+                <div class="w-full lg:w-1/2 flex flex-col">
+                    <div id="books-list" class="space-y-3 flex-1 overflow-y-auto" style="max-height: 70vh;"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Tela de Detalhes do Capítulo -->
@@ -726,6 +756,15 @@
         const pdfLoading = document.getElementById('pdf-loading');
         const chapterAnnotationsTextarea = document.getElementById('chapter-annotations');
         
+        // --- Elementos do Layout Principal ---
+        const bookSelector = document.getElementById('book-selector');
+        const mainPdfCanvas = document.getElementById('main-pdf-canvas');
+        const mainPdfLoading = document.getElementById('main-pdf-loading');
+        const mainPdfInfo = document.getElementById('main-pdf-info');
+        const pageInfoMain = document.getElementById('page-info-main');
+        const prevPageMainButton = document.getElementById('prev-page-main');
+        const nextPageMainButton = document.getElementById('next-page-main');
+        
         // --- Elementos do Layout Dividido ---
         const splitLayout = document.getElementById('split-layout');
         const traditionalLayout = document.getElementById('traditional-layout');
@@ -741,6 +780,190 @@
         let endPage = 1;
         let pdfDoc = null;
         let scale = 1.5;
+        
+        // --- Variáveis do PDF Principal ---
+        let mainPdfDoc = null;
+        let mainCurrentPage = 1;
+        let mainTotalPages = 0;
+        
+        // Funções do PDF principal na tela dividida
+        async function loadMainPdf() {
+            try {
+                mainPdfLoading.classList.remove('hidden');
+                
+                // Carregar Livro 1 como padrão
+                const pdfUrl = 'Livro 1 - Irmãos Mandarim.pdf';
+                const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+                mainPdfDoc = pdf;
+                mainTotalPages = pdf.numPages;
+                mainCurrentPage = 1;
+                
+                console.log(`PDF principal carregado: ${mainTotalPages} páginas`);
+                await renderMainPdfPage();
+                updateMainPdfInfo();
+                
+                mainPdfLoading.classList.add('hidden');
+            } catch (error) {
+                console.error('Erro ao carregar PDF principal:', error);
+                mainPdfLoading.innerHTML = '<span class="text-red-500">❌ Erro ao carregar PDF</span>';
+            }
+        }
+        
+        async function renderMainPdfPage() {
+            if (!mainPdfDoc) return;
+            
+            try {
+                const page = await mainPdfDoc.getPage(mainCurrentPage);
+                const scale = 1.0;
+                const viewport = page.getViewport({ scale });
+                
+                const context = mainPdfCanvas.getContext('2d');
+                mainPdfCanvas.height = viewport.height;
+                mainPdfCanvas.width = viewport.width;
+                
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                
+                // Sincronizar com capítulos
+                syncChapterHighlight();
+                
+                // Atualizar info da página
+                updateMainPageInfo();
+                
+            } catch (error) {
+                console.error('Erro ao renderizar página do PDF principal:', error);
+            }
+        }
+        
+        function syncChapterHighlight() {
+            // Remove highlight anterior
+            document.querySelectorAll('.chapter-item.highlighted').forEach(item => {
+                item.classList.remove('highlighted', 'bg-blue-50', 'border-blue-200');
+            });
+            
+            // Expande livros se necessário
+            document.querySelectorAll('.collapsed').forEach(book => {
+                book.classList.remove('collapsed');
+                const bookIndex = book.id.match(/book-(\d+)/)?.[1];
+                if (bookIndex) {
+                    const chaptersList = document.getElementById(`chapters-list-${bookIndex}`);
+                    if (chaptersList) {
+                        chaptersList.classList.remove('hidden');
+                        localStorage.setItem(`book-${bookIndex}-expanded`, 'true');
+                    }
+                }
+            });
+            
+            // Encontrar capítulo correspondente à página atual
+            const currentChapterInfo = findChapterByPage(mainCurrentPage);
+            if (currentChapterInfo) {
+                const { livroIndex, capituloIndex } = currentChapterInfo;
+                
+                // Destacar capítulo atual
+                const chapterItems = document.querySelectorAll(`.chapter-item`);
+                chapterItems.forEach(item => {
+                    const onclickAttr = item.querySelector('[onclick]')?.getAttribute('onclick');
+                    if (onclickAttr && onclickAttr.includes(`${livroIndex}, ${capituloIndex}`)) {
+                        item.classList.add('highlighted', 'bg-blue-50', 'border-blue-200');
+                        item.style.borderLeft = '4px solid #3B82F6';
+                        
+                        // Scroll para o item se necessário
+                        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+                
+                // Atualizar info do PDF
+                const capitulo = currentData[livroIndex].capitulos[capituloIndex];
+                mainPdfInfo.textContent = `Livro ${livroIndex + 1} - Cap ${capitulo.capitulo}: ${capitulo.tituloCapitulo}`;
+            } else {
+                mainPdfInfo.textContent = `Página ${mainCurrentPage} de ${mainTotalPages}`;
+            }
+        }
+        
+        function findChapterByPage(pageNumber) {
+            // Procurar em ambos os livros qual capítulo corresponde à página
+            for (let livroIndex = 0; livroIndex < currentData.length; livroIndex++) {
+                const pageMapping = chapterPageMapping[livroIndex];
+                if (!pageMapping) continue;
+                
+                for (let capituloIndex = 0; capituloIndex < currentData[livroIndex].capitulos.length; capituloIndex++) {
+                    const capitulo = currentData[livroIndex].capitulos[capituloIndex];
+                    const capituloNumber = capitulo.capitulo;
+                    const chapterPages = pageMapping[capituloNumber];
+                    
+                    if (chapterPages && pageNumber >= chapterPages.startPage && pageNumber <= chapterPages.endPage) {
+                        return { livroIndex, capituloIndex, capituloNumber };
+                    }
+                }
+            }
+            return null;
+        }
+        
+        function updateMainPdfInfo() {
+            if (!mainPdfDoc) return;
+            syncChapterHighlight();
+        }
+        
+        // Navegação do PDF principal
+        function goToMainPreviousPage() {
+            if (mainCurrentPage > 1) {
+                mainCurrentPage--;
+                renderMainPdfPage();
+            }
+        }
+        
+        function goToMainNextPage() {
+            if (mainCurrentPage < mainTotalPages) {
+                mainCurrentPage++;
+                renderMainPdfPage();
+            }
+        }
+        
+        // Função para trocar de livro
+        async function switchToBook(bookIndex) {
+            try {
+                mainPdfLoading.classList.remove('hidden');
+                
+                const pdfUrl = `Livro ${bookIndex + 1} - Irmãos Mandarim.pdf`;
+                const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+                mainPdfDoc = pdf;
+                mainTotalPages = pdf.numPages;
+                mainCurrentPage = 1;
+                
+                console.log(`Livro ${bookIndex + 1} carregado: ${mainTotalPages} páginas`);
+                await renderMainPdfPage();
+                updateMainPageInfo();
+                
+                mainPdfLoading.classList.add('hidden');
+            } catch (error) {
+                console.error('Erro ao carregar livro:', error);
+                mainPdfLoading.innerHTML = '<span class="text-red-500">❌ Erro ao carregar livro</span>';
+            }
+        }
+        
+        function updateMainPageInfo() {
+            if (pageInfoMain) {
+                pageInfoMain.textContent = `${mainCurrentPage}/${mainTotalPages}`;
+            }
+            updateMainPdfInfo();
+        }
+        
+        // Adicionar event listeners para teclado
+        document.addEventListener('keydown', (e) => {
+            if (currentView === 'main') {
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    goToMainPreviousPage();
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    goToMainNextPage();
+                }
+            }
+        });
 
         // --- Funções do Checklist (Inalteradas) ---
          function calculateSubtopicProgress(subtopicosObj) { /* ... */ }
@@ -1290,6 +1513,10 @@
                 }
                 
                 renderMainScreen();
+                
+                // Carregar PDF principal
+                loadMainPdf();
+                
                 console.log('=== APLICATIVO INICIADO COM SUCESSO ===');
                 
             } catch (error) {
@@ -1328,6 +1555,24 @@
                     annotationsDebounceTimer = setTimeout(() => {
                         saveChapterAnnotations();
                     }, 300);
+                });
+            }
+            
+            // Event listeners para o PDF principal
+            if(prevPageMainButton) {
+                prevPageMainButton.addEventListener('click', goToMainPreviousPage);
+            }
+            
+            if(nextPageMainButton) {
+                nextPageMainButton.addEventListener('click', goToMainNextPage);
+            }
+            
+            if(bookSelector) {
+                bookSelector.addEventListener('change', async (e) => {
+                    const selectedBookIndex = e.target.value;
+                    if (selectedBookIndex !== '') {
+                        await switchToBook(parseInt(selectedBookIndex));
+                    }
                 });
             }
             
