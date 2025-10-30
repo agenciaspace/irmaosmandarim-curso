@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Progresso Mandarim</title>
+    <!-- Inclui Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos do Checklist (Inalterados) */
+        .progress-bar-bg { background-color: #e5e7eb; border-radius: 0.375rem; overflow: hidden; height: 1.25rem; border: 1px solid #d1d5db; }
+        .progress-bar-fill { background-color: #34d399; height: 100%; transition: width 0.3s ease-in-out; text-align: center; color: white; font-size: 0.75rem; line-height: 1.25rem; border-radius: 0.375rem; }
+        .completed-item label { text-decoration: line-through; color: #6b7280; }
+        .chapter-item:hover { background-color: #f3f4f6; }
+        .toggle-icon::before { content: '▼ '; display: inline-block; transition: transform 0.2s ease-in-out; }
+        .collapsed .toggle-icon::before { transform: rotate(-90deg); content: '► '; }
+        /* Adiciona padding extra no body para evitar que o botão do chatbase cubra conteúdo */
+        body { padding-bottom: 80px; }
+
+        /* Estilo para a nova seção de Notas */
+        .notes-textarea {
+            width: 100%;
+            height: 150px; /* Altura aumentada */
+            padding: 0.75rem; /* p-3 */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 1rem; /* mt-4 */
+            resize: vertical; /* Permite redimensionar verticalmente */
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .notes-textarea:focus {
+            border-color: #3b82f6; /* focus:border-blue-500 */
+            box-shadow: 0 0 0 2px #bfdbfe; /* focus:ring-blue-200 */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans font-family-inter relative min-h-screen">
+
+    <!-- Conteúdo Principal do Checklist (Inalterado) -->
+    <div id="app" class="container mx-auto p-4 md:p-6 max-w-3xl">
+        <!-- Tela Principal -->
+        <div id="main-screen">
+            <h1 class="text-2xl md:text-3xl font-bold mb-4 text-gray-800 text-center">Meu Progresso Mandarim 📚</h1>
+            
+            <!-- Botão para resetar dados (debug) -->
+            <div class="text-center mb-4">
+                <button id="reset-button" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm transition">
+                    🔄 Resetar Dados (Debug)
+                </button>
+            </div>
+            
+            <div class="bg-white p-4 rounded-lg shadow mb-6 border border-gray-200">
+                <h2 class="text-lg font-semibold mb-2 text-gray-700">Progresso Total</h2>
+                <div class="progress-bar-bg"><div id="progress-bar-total" class="progress-bar-fill"></div></div>
+                <p id="progress-text-total" class="text-right text-sm font-medium text-gray-600 mt-1">0%</p>
+            </div>
+            
+            <!-- Status de carregamento -->
+            <div id="loading-status" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+                <p>🔄 Carregando dados...</p>
+            </div>
+            
+            <div id="books-list" class="space-y-4"></div>
+        </div>
+
+        <!-- Tela de Detalhes do Capítulo (oculta e inalterada) -->
+        <div id="chapter-screen" class="hidden">
+             <button id="back-button" class="mb-4 text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out">&larr; Voltar</button>
+             <h1 id="chapter-title" class="text-xl md:text-2xl font-bold mb-1 text-gray-800"></h1>
+              <div class="mb-4">
+                 <div class="progress-bar-bg"><div id="progress-bar-chapter-detail" class="progress-bar-fill"></div></div>
+                 <p id="progress-text-chapter-detail" class="text-right text-sm font-medium text-gray-600 mt-1">0%</p>
+             </div>
+             <div id="chapter-content" class="bg-white p-4 rounded-lg shadow space-y-4 border border-gray-200">
+                <!-- Conteúdo do checklist é gerado aqui -->
+                <!-- A seção de Notas será adicionada aqui via JS -->
+             </div>
+        </div>
+    </div>
+
+    <!-- Script Principal do Checklist -->
+    <script>
+        // --- Estrutura de Dados do Checklist (Inalterada) ---
+        const checklistData = [
+            // ... (toda a estrutura de dados completa, como na versão anterior) ...
+             {
+            livro: 1,
+            tituloLivro: "Livro 1",
+            capitulos: [
+              {
+                capitulo: 0,
+                tituloCapitulo: "Introdução",
+                subtopicos: {
+                  topicos: [
+                    { id: "l1c0t1", texto: "Introdução ao Pinyin (Iniciais, Finais, Tons)", concluido: false },
+                    { id: "l1c0t2", texto: "Regras de pronúncia e mudanças de tom", concluido: false },
+                    { id: "l1c0t3", texto: "Estrutura básica dos caracteres chineses (Hanzi)", concluido: false },
+                    { id: "l1c0t4", texto: "Ordem dos traços", concluido: false },
+                  ]
+                }
+              },
+              {
+                capitulo: 1,
+                tituloCapitulo: "你是巴西人吗?",
+                subtopicos: {
+                  dialogos: [
+                    { id: "l1c1d1", texto: "Diálogo 1 (Paulo e Xiaolong se conhecem)", concluido: false },
+                    { id: "l1c1d2", texto: "Diálogo 2 (Professora Li e Lia)", concluido: false },
+                    { id: "l1c1d3", texto: "Apresentação (Thiago e Lucas)", concluido: false }
+                  ],
+                  vocabulario: [
+                    { id: "l1c1v1", texto: "Vocabulário 1: Cumprimentos (你好), pronomes (你, 我), chamar-se (叫), ser (是), nacionalidades (中国人, 巴西人), pergunta (吗), não (不), também (也)", concluido: false },
+                    { id: "l1c1v2", texto: "Vocabulário 2: Tratamento formal (您), profissões (老师, 学生), países (美国, 英国), pronomes (他, 她, 们)", concluido: false },
+                    { id: "l1c1v3", texto: "Vocabulário 3: Taiwan (台湾), agradecer (谢谢)", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l1c1g1", texto: "Estrutura básica da frase", concluido: false },
+                    { id: "l1c1g2", texto: "Uso do verbo 是 (ser)", concluido: false },
+                    { id: "l1c1g3", texto: "Formando perguntas com 吗", concluido: false },
+                    { id: "l1c1g4", texto: "Negação com 不", concluido: false },
+                    { id: "l1c1g5", texto: "Uso do advérbio 也 (também)", concluido: false },
+                    { id: "l1c1g6", texto: "Pronomes e plural com 们", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l1c1e1", texto: "Exercício: Completar frases com 是", concluido: false },
+                    { id: "l1c1e2", texto: "Exercício: Formular perguntas com 吗", concluido: false },
+                    { id: "l1c1e3", texto: "Exercício: Transformar frases (afirmação, negação, pergunta)", concluido: false },
+                    { id: "l1c1e4", texto: "Exercício: Completar diálogo", concluido: false }
+                  ],
+                  hanzi: [
+                    { id: "l1c1h1", texto: "Prática de Hanzi: 你, 好, 我, 叫, 是, 中, 国, 人, 吗, 也, 不, 巴, 西, 学, 生, 老, 师, 您, 美, 英, 他, 她, 们, 台, 湾, 谢", concluido: false }
+                  ]
+                }
+              },
+               {
+                capitulo: 2,
+                tituloCapitulo: "你有书吗?",
+                subtopicos: {
+                  dialogos: [
+                    { id: "l1c2d1", texto: "Diálogo 1 (Professora Li e Paulo - materiais)", concluido: false },
+                    { id: "l1c2d2", texto: "Diálogo 2 (Paulo mostra a casa para Lia)", concluido: false },
+                    { id: "l1c2d3", texto: "Texto (Professora Li descreve sua casa)", concluido: false }
+                  ],
+                  vocabulario: [
+                    { id: "l1c2v1", texto: "Vocabulário 1: Ter (有), não ter (沒有), objetos (书, 笔, 铅笔, 地图)", concluido: false },
+                    { id: "l1c2v2", texto: "Vocabulário 2: Este/Isto (这), posse (的), casa/família (家), bem-vindo (欢迎), TV (电视), computador (电脑), um (一), medida geral (个)", concluido: false },
+                    { id: "l1c2v3", texto: "Vocabulário 3: Dois (两/二), 3-5 (三, 四, 五), medidas (支, 本, 张)", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l1c2g1", texto: "Uso do verbo 有 / 没有", concluido: false },
+                    { id: "l1c2g2", texto: "Partícula de posse 的", concluido: false },
+                    { id: "l1c2g3", texto: "Uso de palavras de medida com numerais", concluido: false },
+                    { id: "l1c2g4", texto: "Diferença entre 两 e 二", concluido: false }
+                  ],
+                   exercicios: [
+                    { id: "l1c2e1", texto: "Exercício: Responder perguntas usando 的", concluido: false },
+                    { id: "l1c2e2", texto: "Exercício: Responder perguntas usando 有/没有", concluido: false },
+                    { id: "l1c2e3", texto: "Exercício: Ligar palavras e imagens", concluido: false },
+                    { id: "l1c2e4", texto: "Exercício: Preencher com palavras de medida", concluido: false },
+                    { id: "l1c2e5", texto: "Exercício: Transformar frases", concluido: false },
+                    { id: "l1c2e6", texto: "Exercício: Reorganizar palavras", concluido: false }
+                  ],
+                  hanzi: [
+                    { id: "l1c2h1", texto: "Prática de Hanzi: 有, 没, 书, 笔, 铅, 地, 图, 欢, 迎, 这, 的, 家, 电, 视, 脑, 一, 个, 两, 二, 三, 支, 四, 五, 本, 张", concluido: false }
+                  ]
+                }
+              },
+               {
+                capitulo: 3,
+                tituloCapitulo: "他们是谁?",
+                 subtopicos: {
+                  dialogos: [
+                    { id: "l1c3d1", texto: "Diálogo 1 (Xiaolong mostra foto de família)", concluido: false },
+                    { id: "l1c3d2", texto: "Diálogo 2 (Lia e Marina falam sobre famílias)", concluido: false },
+                    { id: "l1c3d3", texto: "Diálogo 3 (Professora Li pergunta sobre famílias)", concluido: false }
+                  ],
+                  vocabulario: [
+                    { id: "l1c3v1", texto: "Vocabulário 1: Foto (照片), sim (是的), quem? (谁), família (家人), quantos? (几), medida (口), pai (爸爸), mãe (妈妈), e (和)", concluido: false },
+                    { id: "l1c3v2", texto: "Vocabulário 2: O quê? (什么), médico (医生), irmão mais velho (哥哥), fazer (做), trabalho (工作), irmã mais velha (姐姐), irmã mais nova (妹妹)", concluido: false },
+                    { id: "l1c3v3", texto: "Vocabulário 3: Irmão mais novo (弟弟)", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l1c3g1", texto: "Perguntar 'quem?' com 谁", concluido: false },
+                    { id: "l1c3g2", texto: "Perguntar 'quantos?' (poucos) com 几", concluido: false },
+                    { id: "l1c3g3", texto: "Perguntar 'o quê?' com 什么", concluido: false },
+                    { id: "l1c3g4", texto: "Uso da medida 口 para família", concluido: false },
+                    { id: "l1c3g5", texto: "Perguntar a profissão (做什么工作)", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l1c3e1", texto: "Exercício: Formular perguntas com 什么, 几, 谁", concluido: false },
+                    { id: "l1c3e2", texto: "Exercício: Responder perguntas pessoais", concluido: false },
+                    { id: "l1c3e3", texto: "Exercício: Leitura e interpretação", concluido: false }
+                  ],
+                  hanzi: [
+                    { id: "l1c3h1", texto: "Prática de Hanzi: 照, 片, 是, 的, 谁, 家, 人, 几, 口, 爸, 妈, 和, 什, 么, 医, 生, 哥, 做, 工, 作, 姐, 妹, 弟", concluido: false }
+                  ]
+                }
+              },
+              {
+                capitulo: 4,
+                tituloCapitulo: "你学习汉语吗?",
+                subtopicos: {
+                   dialogos: [
+                    { id: "l1c4d1", texto: "Diálogo 1 (Marina e Xiaolong - nacionalidade, estudos)", concluido: false },
+                    { id: "l1c4d2", texto: "Diálogo 2 (Lia e Paulo - turmas)", concluido: false },
+                    { id: "l1c4d3", texto: "Diálogo 3 (Marina recebe Lia e Paulo)", concluido: false }
+                  ],
+                   vocabulario: [
+                    { id: "l1c4v1", texto: "Vocabulário 1: Nome (名字), qual? (哪), país (国), estudar (学习/学), Mandarim (汉语), correto (对), Inglês (英语), Português (葡萄牙语), difícil (难)", concluido: false },
+                    { id: "l1c4v2", texto: "Vocabulário 2: Turma (班), todos (都), estrangeiro (外国/外国人), quantos? (多少), menino/aluno (男生), menina/aluna (女生), 6-10 (六, 七, 八, 九, 十)", concluido: false },
+                    { id: "l1c4v3", texto: "Vocabulário 3: Amigo (朋友), colega (同学)", concluido: false }
+                  ],
+                   gramatica: [
+                    { id: "l1c4g1", texto: "Perguntar 'qual país?' com 哪国", concluido: false },
+                    { id: "l1c4g2", texto: "Uso de 多少 vs 几", concluido: false },
+                    { id: "l1c4g3", texto: "Uso do advérbio 都 (todos)", concluido: false },
+                    { id: "l1c4g4", texto: "Estrutura 不都 (nem todos)", concluido: false },
+                    { id: "l1c4g5", texto: "Formação de números 11-99", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l1c4e1", texto: "Exercício: Ouvir e escrever números", concluido: false },
+                    { id: "l1c4e2", texto: "Exercício: Interpretação de texto (alunos)", concluido: false },
+                    { id: "l1c4e3", texto: "Exercício: Escrever números em caracteres", concluido: false },
+                    { id: "l1c4e4", texto: "Exercício: Fazer perguntas com 几 / 多少", concluido: false },
+                    { id: "l1c4e5", texto: "Exercício: Responder perguntas pessoais", concluido: false }
+                  ],
+                   hanzi: [
+                    { id: "l1c4h1", texto: "Prática de Hanzi: 名, 字, 哪, 国, 学, 习, 汉, 语, 对, 英, 葡, 萄, 牙, 难, 班, 都, 外, 多, 少, 男, 女, 生, 六, 七, 八, 九, 十, 朋, 友, 同", concluido: false }
+                  ]
+                }
+              },
+               {
+                capitulo: 5,
+                tituloCapitulo: "今天几月几号?",
+                subtopicos: {
+                   dialogos: [
+                    { id: "l1c5d1", texto: "Diálogo 1 (Lia parabeniza Marina)", concluido: false },
+                    { id: "l1c5d2", texto: "Diálogo 2 (Paulo e Xiaolong - aniversários)", concluido: false }
+                  ],
+                   vocabulario: [
+                    { id: "l1c5v1", texto: "Vocabulário 1: Alô (喂), muito (很), hoje (今天), dia (天), aniversário (生日), desejar (祝), feliz (快乐), de nada (不谢), amanhã (明天), ontem (昨天), dar presente (送), presente (礼物), feliz/contente (高兴)", concluido: false },
+                    { id: "l1c5v2", texto: "Vocabulário 2: Mês (月), dia (号/日), semana (星期/礼拜), dias da semana (星期一 a 日), idade (岁)", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l1c5g1", texto: "Formular datas (Mês + Dia)", concluido: false },
+                    { id: "l1c5g2", texto: "Perguntar data (几月几号)", concluido: false },
+                    { id: "l1c5g3", texto: "Perguntar dia da semana (星期几)", concluido: false },
+                    { id: "l1c5g4", texto: "Perguntar idade (几岁)", concluido: false },
+                    { id: "l1c5g5", texto: "Expressar votos (祝你生日快乐)", concluido: false }
+                  ],
+                  exercicios: [
+                     { id: "l1c5e1", texto: "Exercício: Responder perguntas (datas, dias da semana)", concluido: false },
+                     { id: "l1c5e2", texto: "Exercício: Responder perguntas (aniversários, idade)", concluido: false },
+                     { id: "l1c5e3", texto: "Exercício: Completar diálogo (aniversário)", concluido: false }
+                  ],
+                  hanzi: [
+                     { id: "l1c5h1", texto: "Prática de Hanzi: 喂, 很, 今, 天, 生, 日, 祝, 快, 乐, 不, 谢, 明, 送, 礼, 物, 高, 兴, 月, 号, 星, 期, 岁, 一, 二, 三, 四, 五, 六", concluido: false }
+                  ]
+                }
+              },
+              {
+                capitulo: 6,
+                tituloCapitulo: "你几点起床?",
+                 subtopicos: {
+                   dialogos: [
+                    { id: "l1c6d1", texto: "Diálogo 1 (Xiaolong pergunta horas ao pai)", concluido: false },
+                    { id: "l1c6d2", texto: "Diálogo 2 (Professora Li e Marina - rotina)", concluido: false }
+                  ],
+                   vocabulario: [
+                    { id: "l1c6v1", texto: "Vocabulário 1: Agora (现在), hora (点), zero (零), minuto (分), por quê? (为什么), manhã cedo (早上), metade/meia (半), começar/terminar aula (上课/下课), de manhã (上午), quarto de hora (刻)", concluido: false },
+                    { id: "l1c6v2", texto: "Vocabulário 2: Acordar (起床), momento (时候), quando? (什么时候), meio-dia (中午), à tarde (下午), ver/assistir/ler (看/看书), à noite (晚上), dormir (睡觉)", concluido: false }
+                  ],
+                  gramatica: [
+                     { id: "l1c6g1", texto: "Expressar horas e minutos", concluido: false },
+                     { id: "l1c6g2", texto: "Uso de 半 (meia hora) e 刻 (quarto de hora)", concluido: false },
+                     { id: "l1c6g3", texto: "Perguntar horas (几点)", concluido: false },
+                     { id: "l1c6g4", texto: "Perguntar 'quando?' (什么时候)", concluido: false },
+                     { id: "l1c6g5", texto: "Divisões do dia (早上, 上午, 中午, 下午, 晚上)", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l1c6e1", texto: "Exercício: Dizer as horas", concluido: false },
+                    { id: "l1c6e2", texto: "Exercício: Responder perguntas (rotina, horários)", concluido: false },
+                    { id: "l1c6e3", texto: "Exercício: Ouvir e ordenar horários", concluido: false },
+                    { id: "l1c6e4", texto: "Exercício: Completar diálogo (horas)", concluido: false }
+                  ],
+                  hanzi: [
+                     { id: "l1c6h1", texto: "Prática de Hanzi: 现, 在, 点, 零, 分, 为, 什, 么, 早, 上, 半, 课, 下, 午, 刻, 起, 床, 时, 候, 中, 看, 书, 晚, 睡, 觉", concluido: false }
+                  ]
+                 }
+              },
+               {
+                capitulo: 7,
+                tituloCapitulo: "请问,学校在哪里?",
+                 subtopicos: {
+                   dialogos: [
+                    { id: "l1c7d1", texto: "Diálogo 1 (Lia indica caminho da escola)", concluido: false },
+                    { id: "l1c7d2", texto: "Diálogo 2 (Paulo pede informação a policial)", concluido: false },
+                    { id: "l1c7d3", texto: "Apresentação (Yaoming descreve arredores)", concluido: false }
+                  ],
+                  vocabulario: [
+                    { id: "l1c7v1", texto: "Vocabulário 1: Escola (学校), estar em (在), onde? (哪里), frente (前面/前边), com fome (饿), ao lado (旁边), restaurante (饭馆), atrás (后面/后边), banco (银行), oeste (西边), leste (东边)", concluido: false },
+                    { id: "l1c7v2", texto: "Vocabulário 2: Com licença (请问), aquele (那), lugar (地方), medida prédios (座), prédio (楼), hospital (医院), norte (北边), sul (南边), livraria (书店), loja (店), de nada (不客气)", concluido: false },
+                    { id: "l1c7v3", texto: "Vocabulário 3: Conhecer (认识)", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l1c7g1", texto: "Uso de 在 para localização", concluido: false },
+                    { id: "l1c7g2", texto: "Perguntar 'onde?' com 在哪里", concluido: false },
+                    { id: "l1c7g3", texto: "Palavras de localização (pontos cardeais, posições)", concluido: false },
+                    { id: "l1c7g4", texto: "Uso de 请问", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l1c7e1", texto: "Exercício: Descrever localizações (imagens)", concluido: false },
+                    { id: "l1c7e2", texto: "Exercício: Responder perguntas (direções)", concluido: false },
+                    { id: "l1c7e3", texto: "Exercício: Responder perguntas (localização)", concluido: false },
+                    { id: "l1c7e4", texto: "Exercício: Fazer perguntas (interrogativos)", concluido: false }
+                  ],
+                  hanzi: [
+                    { id: "l1c7h1", texto: "Prática de Hanzi: 学, 校, 在, 哪, 里, 前, 边, 面, 饿, 旁, 饭, 馆, 后, 银, 行, 西, 东, 请, 问, 那, 个, 地, 方, 座, 楼, 医, 院, 北, 南, 书, 店, 不, 客, 气, 认, 识", concluido: false }
+                  ]
+                }
+              },
+               {
+                capitulo: 8,
+                tituloCapitulo: "你的房间里有什么?",
+                 subtopicos: {
+                   dialogos: [
+                    { id: "l1c8d1", texto: "Diálogo 1 (Yaoming visita quarto de Lia)", concluido: false },
+                    { id: "l1c8d2", texto: "Diálogo 2 (Xiaolong visita quarto de Paulo - animais)", concluido: false },
+                    { id: "l1c8d3", texto: "Texto (Professora Li descreve seu quarto)", concluido: false }
+                  ],
+                  vocabulario: [
+                    { id: "l1c8v1", texto: "Vocabulário 1: Bonito (漂亮), quarto (房间), dentro (里/里边), mesa (桌子), cama (床), medida (把), cadeira (椅子), estante (书架), fora (外/外边)", concluido: false },
+                    { id: "l1c8v2", texto: "Vocabulário 2: Esquerda (左/左边), direita (右/右边), medida (只), cachorro (狗), gato (猫), cima (上/上边), partícula (呢), baixo (下/下边)", concluido: false },
+                    { id: "l1c8v3", texto: "Vocabulário 3: Meio/Entre (中间)", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l1c8g1", texto: "Palavras de localização detalhadas", concluido: false },
+                    { id: "l1c8g2", texto: "Estrutura 'Local + Verbo + Objeto'", concluido: false },
+                    { id: "l1c8g3", texto: "Uso da partícula 呢 (retomar pergunta)", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l1c8e1", texto: "Exercício: Responder perguntas (próprio quarto)", concluido: false },
+                    { id: "l1c8e2", texto: "Exercício: Descrever localizações (imagens)", concluido: false },
+                    { id: "l1c8e3", texto: "Exercício: Preencher com palavras de medida", concluido: false },
+                    { id: "l1c8e4", texto: "Exercício: Reorganizar palavras", concluido: false }
+                  ],
+                  hanzi: [
+                    { id: "l1c8h1", texto: "Prática de Hanzi: 漂, 亮, 房, 间, 里, 边, 桌, 子, 床, 把, 椅, 书, 架, 外, 左, 右, 只, 狗, 猫, 上, 呢, 下, 中", concluido: false }
+                  ]
+                 }
+              }
+            ]
+          },
+          {
+            livro: 2,
+            tituloLivro: "Livro 2",
+            capitulos: [
+              {
+                capitulo: 9,
+                tituloCapitulo: "你想喝什么?",
+                 subtopicos: {
+                   dialogos: [
+                    { id: "l2c9d1", texto: "Diálogo 1 (Marina oferece bebida a Lia)", concluido: false },
+                    { id: "l2c9d2", texto: "Diálogo 2 (Paulo no restaurante chinês)", concluido: false },
+                    { id: "l2c9d3", texto: "Diálogo 3 (Xiaolong convida Marina)", concluido: false }
+                  ],
+                  vocabulario: [
+                    { id: "l2c9v1", texto: "Vocabulário 1: 好久不见, 坐, 想, 喝, 咖啡, 还是, 茶, 水, 行", concluido: false },
+                    { id: "l2c9v2", texto: "Vocabulário 2: 位, 吃, 披萨, 这里, 菜, 炒面, 米饭, 饺子, 包子", concluido: false },
+                    { id: "l2c9v3", texto: "Vocabulário 3: 啤酒, 吧, 对不起, 不行", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l2c9g1", texto: "Uso de 想 (gostaria)", concluido: false },
+                    { id: "l2c9g2", texto: "Perguntas com 还是 (ou)", concluido: false },
+                    { id: "l2c9g3", texto: "Perguntas afirmativo-negativas", concluido: false },
+                    { id: "l2c9g4", texto: "Uso da partícula 吧 (sugestão)", concluido: false }
+                  ],
+                   exercicios: [
+                    { id: "l2c9e1", texto: "Exercício: Formular perguntas com 还是", concluido: false },
+                    { id: "l2c9e2", texto: "Exercício: Criar perguntas afirmativo-negativas", concluido: false },
+                    { id: "l2c9e3", texto: "Exercício: Reformular perguntas (...吗? -> afirm-neg)", concluido: false },
+                    { id: "l2c9e4", texto: "Exercício: Reformular perguntas (...什么? -> ...还是...)", concluido: false }
+                  ],
+                   hanzi: [
+                    { id: "l2c9h1", texto: "Prática de Hanzi: 好, 久, 不, 见, 坐, 想, 喝, 咖, 啡, 还, 是, 茶, 水, 行, 位, 吃, 披, 萨, 这, 里, 菜, 炒, 面, 米, 饭, 饺, 子, 包, 啤, 酒, 吧, 对, 起", concluido: false }
+                  ]
+                }
+              },
+               {
+                capitulo: 10,
+                tituloCapitulo: "这个多少钱?",
+                 subtopicos: {
+                  dialogos: [
+                    { id: "l2c10d1", texto: "Diálogo 1 (Lia compra frutas)", concluido: false },
+                    { id: "l2c10d2", texto: "Diálogo 2 (Paulo compra lanche)", concluido: false },
+                    { id: "l2c10d3", texto: "Diálogo 3 (Xiaolong pechincha)", concluido: false }
+                  ],
+                  vocabulario: [
+                    { id: "l2c10v1", texto: "Vocabulário 1: 要, 买, 斤, 公斤, 苹果, 香蕉, 种, 钱, 多少钱, 块/元, 毛/角, 分", concluido: false },
+                    { id: "l2c10v2", texto: "Vocabulário 2: 杯, 大, 小, 还, 别的, 一共, 给, 找", concluido: false },
+                    { id: "l2c10v3", texto: "Vocabulário 3: 太...了, 贵, 便宜, 一点, 怎么样", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l2c10g1", texto: "Perguntar preço (多少钱)", concluido: false },
+                    { id: "l2c10g2", texto: "Estrutura 太 + Adj + 了", concluido: false },
+                    { id: "l2c10g3", texto: "Expressões para pechinchar", concluido: false },
+                    { id: "l2c10g4", texto: "Uso de 还 (ainda/além disso)", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l2c10e1", texto: "Exercício: Escrever preços", concluido: false },
+                    { id: "l2c10e2", texto: "Exercício: Calcular preços", concluido: false },
+                    { id: "l2c10e3", texto: "Exercício: Responder perguntas (preços)", concluido: false },
+                    { id: "l2c10e4", texto: "Exercício: Completar frases (compras)", concluido: false }
+                  ],
+                  hanzi: [
+                     { id: "l2c10h1", texto: "Prática de Hanzi: 要, 买, 斤, 公, 苹, 果, 香, 蕉, 种, 钱, 多, 少, 块, 元, 毛, 角, 分, 杯, 大, 小, 还, 别, 的, 一, 共, 给, 找, 太, 了, 贵, 便, 宜, 点, 怎, 么, 样", concluido: false }
+                  ]
+                }
+              },
+              {
+                capitulo: 11,
+                tituloCapitulo: "我去买东西",
+                 subtopicos: {
+                   dialogos: [
+                    { id: "l2c11d1", texto: "Diálogo 1 (Yaoming e Paulo combinam supermercado)", concluido: false },
+                    { id: "l2c11d2", texto: "Diálogo 2 (Lia e Marina após aula)", concluido: false },
+                    { id: "l2c11d3", texto: "Diálogo 3 (Marina troca dinheiro)", concluido: false }
+                  ],
+                   vocabulario: [
+                    { id: "l2c11v1", texto: "Vocabulário 1: 忙, 有空, 去, 超市, 东西, 住, 还, 电话, 号码, 再见", concluido: false },
+                    { id: "l2c11v2", texto: "Vocabulário 2: 回, 换, 换钱, 来, 玩", concluido: false },
+                    { id: "l2c11v3", texto: "Vocabulário 3: 美元, 欧元, 人民币, 巴币, 百, 千, 万", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l2c11g1", texto: "Verbos de direção 去, 来, 回", concluido: false },
+                    { id: "l2c11g2", texto: "Estrutura Verbo1 + Local + Verbo2", concluido: false },
+                    { id: "l2c11g3", texto: "Números grandes (centenas, milhares...)", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l2c11e1", texto: "Exercício: Formular frases (Verbo1+Local+Verbo2)", concluido: false },
+                    { id: "l2c11e2", texto: "Exercício: Ligar Hanzi", concluido: false },
+                    { id: "l2c11e3", texto: "Exercício: Escrever números grandes", concluido: false },
+                    { id: "l2c11e4", texto: "Exercício: Responder perguntas (rotina)", concluido: false },
+                    { id: "l2c11e5", texto: "Exercício: Rearrumar palavras", concluido: false },
+                    { id: "l2c11e6", texto: "Exercício: Formular perguntas (interrogativos)", concluido: false }
+                  ],
+                  hanzi: [
+                    { id: "l2c11h1", texto: "Prática de Hanzi: 忙, 空, 有, 去, 超, 市, 东, 西, 住, 还, 电, 话, 号, 码, 再, 见, 回, 换, 钱, 来, 玩, 美, 元, 欧, 人, 民, 币, 巴, 百, 千, 万", concluido: false }
+                  ]
+                 }
+              },
+              {
+                capitulo: 12,
+                tituloCapitulo: "我们怎么去他的家?",
+                subtopicos: {
+                  dialogos: [
+                    { id: "l2c12d1", texto: "Diálogo 1 (Yaoming e Marina planejam ir à casa de Paulo)", concluido: false },
+                    { id: "l2c12d2", texto: "Diálogo 2 (Professora pergunta sobre transporte)", concluido: false }
+                  ],
+                   vocabulario: [
+                    { id: "l2c12v1", texto: "Vocabulário 1: 周末, 怎么, 汽车, 坐, 公车/公共汽车, 挤, 太挤了, 地铁, 站, 出租车, 问题, 没问题, 出发, 拜拜", concluido: false },
+                    { id: "l2c12v2", texto: "Vocabulário 2: 每, 教室, 骑, 摩托车, 自行车, 走路, 开车", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l2c12g1", texto: "Perguntar 'como?' (transporte) com 怎么去", concluido: false },
+                    { id: "l2c12g2", texto: "Verbos para meios de transporte (坐, 骑, 开, 走路)", concluido: false },
+                    { id: "l2c12g3", texto: "Estrutura S + V(transp) + Meio + V(dir) + Local", concluido: false }
+                  ],
+                   exercicios: [
+                    { id: "l2c12e1", texto: "Exercício: Formular frases (transporte)", concluido: false },
+                    { id: "l2c12e2", texto: "Exercício: Ligar Hanzi", concluido: false },
+                    { id: "l2c12e3", texto: "Exercício: Descrever situações (transporte)", concluido: false },
+                    { id: "l2c12e4", texto: "Exercício: Rearrumar palavras", concluido: false }
+                  ],
+                  hanzi: [
+                     { id: "l2c12h1", texto: "Prática de Hanzi: 周, 末, 怎, 么, 汽, 车, 坐, 公, 共, 挤, 太, 了, 地, 铁, 站, 出, 租, 没, 问, 题, 发, 拜, 每, 教, 室, 骑, 摩, 托, 自, 行, 走, 路, 开", concluido: false }
+                  ]
+                }
+              },
+              {
+                capitulo: 13,
+                tituloCapitulo: "我跟朋友一起吃午饭",
+                 subtopicos: {
+                  dialogos: [
+                    { id: "l2c13d1", texto: "Diálogo 1 (Yaoming ajuda Lia)", concluido: false },
+                    { id: "l2c13d2", texto: "Diálogo 2 (Apresentação de Suzuki/Ling Mu)", concluido: false }
+                  ],
+                   vocabulario: [
+                    { id: "l2c13v1", texto: "Vocabulário 1: 还好, 一些, 帮, 一下, 用, 在, 吃饭 (早/午/晚饭), 一起, 门口, 见面", concluido: false },
+                    { id: "l2c13v2", texto: "Vocabulário 2: 介绍, 大家好, 日本, 图书馆, 写, 作业, 或者, 跟, 常/常常, 给, 打电话, 想 (saudade), 聊天, 发, 短信", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l2c13g1", texto: "Preposição 在 + Local + Verbo", concluido: false },
+                    { id: "l2c13g2", texto: "Preposição 跟 + Pessoa + 一起 + Verbo", concluido: false },
+                    { id: "l2c13g3", texto: "Preposição 给 + Pessoa + Verbo", concluido: false },
+                    { id: "l2c13g4", texto: "Diferença 还是 vs 或者", concluido: false },
+                    { id: "l2c13g5", texto: "Uso de 一下", concluido: false },
+                    { id: "l2c13g6", texto: "Advérbios de frequência 常/常常", concluido: false }
+                  ],
+                   exercicios: [
+                    { id: "l2c13e1", texto: "Exercício: Descrever situações com 在", concluido: false },
+                    { id: "l2c13e2", texto: "Exercício: Descrever situações com 跟/给", concluido: false },
+                    { id: "l2c13e3", texto: "Exercício: Audição (Caixa Postal)", concluido: false },
+                    { id: "l2c13e4", texto: "Exercício: Ligar Hanzi", concluido: false },
+                    { id: "l2c13e5", texto: "Exercício: Leitura e interpretação", concluido: false },
+                    { id: "l2c13e6", texto: "Exercício: Rearrumar palavras (preposições)", concluido: false },
+                    { id: "l2c13e7", texto: "Exercício: Preencher com preposições", concluido: false },
+                    { id: "l2c13e8", texto: "Exercício: Responder perguntas pessoais", concluido: false }
+                  ],
+                   hanzi: [
+                     { id: "l2c13h1", texto: "Prática de Hanzi: 还, 好, 一, 些, 帮, 下, 用, 在, 吃, 饭, 早, 午, 晚, 起, 门, 口, 见, 面, 介, 绍, 大, 家, 日, 本, 图, 书, 馆, 写, 作, 业, 或, 者, 跟, 常, 给, 打, 电, 话, 想, 聊, 天, 发, 短, 信", concluido: false }
+                  ]
+                }
+              },
+               {
+                capitulo: 14,
+                tituloCapitulo: "她不能去,她要休息",
+                subtopicos: {
+                  dialogos: [
+                    { id: "l2c14d1", texto: "Diálogo 1 (Paulo convida Marina - prova)", concluido: false },
+                    { id: "l2c14d2", texto: "Diálogo 2 (Suzuki e Xiaolong - fim de semana)", concluido: false }
+                  ],
+                   vocabulario: [
+                    { id: "l2c14v1", texto: "Vocabulário 1: 事, 复习, 想 (desejo), 电影, 下 (próximo), 上 (passado), 考试, 没关系, 舒服, 不舒服, 能, 要 (intenção), 休息", concluido: false },
+                    { id: "l2c14v2", texto: "Vocabulário 2: 大学, 中学, 小学, 一定, 哪里哪里, 一般, 公园, 跑步, 有时候, 哎呀", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l2c14g1", texto: "Verbos modais 想 (desejo), 要 (intenção), 能 (habilidade/permissão)", concluido: false },
+                    { id: "l2c14g2", texto: "Diferença 想 vs 要", concluido: false },
+                    { id: "l2c14g3", texto: "Advérbios de frequência 一般, 有时候", concluido: false },
+                    { id: "l2c14g4", texto: "Uso de 下个 / 上个", concluido: false }
+                  ],
+                   exercicios: [
+                    { id: "l2c14e1", texto: "Exercício: Descrever situações com 想", concluido: false },
+                    { id: "l2c14e2", texto: "Exercício: Descrever situações com 要", concluido: false },
+                    { id: "l2c14e3", texto: "Exercício: Descrever situações com 能", concluido: false },
+                    { id: "l2c14e4", texto: "Exercício: Ligar Hanzi", concluido: false },
+                    { id: "l2c14e5", texto: "Exercício: Preencher com verbos modais", concluido: false },
+                    { id: "l2c14e6", texto: "Exercício: Responder perguntas pessoais", concluido: false }
+                  ],
+                   hanzi: [
+                    { id: "l2c14h1", texto: "Prática de Hanzi: 事, 复, 习, 想, 电, 影, 下, 上, 考, 试, 没, 关, 系, 舒, 服, 能, 要, 休, 息, 北, 京, 大, 学, 中, 小, 一, 定, 哪, 里, 般, 公, 园, 跑, 步, 有, 时, 候, 哎, 呀", concluido: false }
+                  ]
+                }
+              },
+               {
+                capitulo: 15,
+                tituloCapitulo: "从这里到长城怎么去?",
+                subtopicos: {
+                  dialogos: [
+                    { id: "l2c15d1", texto: "Diálogo 1 (Paulo convida Marina à Muralha)", concluido: false },
+                    { id: "l2c15d2", texto: "Diálogo 2 (Marina e Yaoming na Muralha)", concluido: false },
+                    { id: "l2c15d3", texto: "Texto (Lia sobre rotina de estudos)", concluido: false }
+                  ],
+                   vocabulario: [
+                    { id: "l2c15v1", texto: "Vocabulário 1: 时间, 长城, 从, 到, 线, 咖啡店, 等", concluido: false },
+                    { id: "l2c15v2", texto: "Vocabulário 2: 第, 次, 真的, 练习, 口语, 语音, 没事, 走吧, 语法, 汉字", concluido: false },
+                    { id: "l2c15v3", texto: "Vocabulário 3: 听, 对话, 说", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l2c15g1", texto: "Preposição 从...到 (lugar)", concluido: false },
+                    { id: "l2c15g2", texto: "Preposição 从...到 (tempo)", concluido: false },
+                    { id: "l2c15g3", texto: "Números ordinais com 第", concluido: false },
+                    { id: "l2c15g4", texto: "As quatro habilidades (听, 说, 读, 写)", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l2c15e1", texto: "Exercício: Descrever percursos com 从", concluido: false },
+                    { id: "l2c15e2", texto: "Exercício: Descrever períodos com 从...到", concluido: false },
+                    { id: "l2c15e3", texto: "Exercício: Leitura e interpretação (rotina)", concluido: false },
+                    { id: "l2c15e4", texto: "Exercício: Rearrumar palavras (从/到)", concluido: false },
+                    { id: "l2c15e5", texto: "Exercício: Responder perguntas (rotina, estudos)", concluido: false }
+                  ],
+                   hanzi: [
+                     { id: "l2c15h1", texto: "Prática de Hanzi: 时, 间, 长, 城, 从, 到, 线, 咖, 啡, 店, 等, 第, 次, 真, 的, 练, 习, 口, 语, 音, 没, 事, 走, 吧, 法, 汉, 字, 听, 对, 话, 说", concluido: false }
+                  ]
+                }
+              },
+               {
+                capitulo: 16,
+                tituloCapitulo: "你在做什么呢?",
+                subtopicos: {
+                   dialogos: [
+                    { id: "l2c16d1", texto: "Diálogo 1 (Xiaolong e Paulo - futebol)", concluido: false },
+                    { id: "l2c16d2", texto: "Diálogo 2 (Marina convida Yaoming - ginásio)", concluido: false },
+                    { id: "l2c16d3", texto: "Texto (Lia apresenta esportes ingleses)", concluido: false }
+                  ],
+                  vocabulario: [
+                    { id: "l2c16v1", texto: "Vocabulário 1: 在...呢, 加油, 手机, 操场, 运动, 锻炼, 踢, 足球, 打, 篮球, 下次, 上次, 啊", concluido: false },
+                    { id: "l2c16v2", texto: "Vocabulário 2: 比赛, 体育馆, 喜欢, 有的, 游泳, 穿, 衣服", concluido: false }
+                  ],
+                  gramatica: [
+                    { id: "l2c16g1", texto: "Estrutura 在...呢 (presente contínuo)", concluido: false },
+                    { id: "l2c16g2", texto: "Negação do presente contínuo (没在)", concluido: false },
+                    { id: "l2c16g3", texto: "Estrutura 有的... 有的...", concluido: false },
+                    { id: "l2c16g4", texto: "Verbos para esportes (踢, 打, 游泳, 跑步)", concluido: false }
+                  ],
+                  exercicios: [
+                    { id: "l2c16e1", texto: "Exercício: Descrever ações em progresso", concluido: false },
+                    { id: "l2c16e2", texto: "Exercício: Leitura e interpretação (esportes)", concluido: false },
+                    { id: "l2c16e3", texto: "Exercício: Reescrever frases na negativa (presente contínuo)", concluido: false }
+                  ],
+                  hanzi: [
+                    { id: "l2c16h1", texto: "Prática de Hanzi: 在, 呢, 加, 油, 手, 机, 操, 场, 运, 动, 锻, 炼, 踢, 足, 球, 打, 篮, 下, 次, 上, 啊, 比, 赛, 体, 育, 馆, 喜, 欢, 有, 的, 游, 泳, 穿, 衣, 服", concluido: false }
+                  ]
+                }
+              }
+            ]
+          }
+        ]; // Fim da checklistData
+
+        // --- Estado do Aplicativo ---
+        let currentData = [];
+        let currentView = 'main';
+        let currentChapter = { livroIndex: -1, capituloIndex: -1 };
+
+        // --- Elementos DOM ---
+        const appDiv = document.getElementById('app');
+        const mainScreen = document.getElementById('main-screen');
+        const chapterScreen = document.getElementById('chapter-screen');
+        const booksListDiv = document.getElementById('books-list');
+        const chapterContentDiv = document.getElementById('chapter-content');
+        const backButton = document.getElementById('back-button');
+        const chapterTitleH1 = document.getElementById('chapter-title');
+        const progressBarTotal = document.getElementById('progress-bar-total');
+        const progressTextTotal = document.getElementById('progress-text-total');
+        const progressBarChapterDetail = document.getElementById('progress-bar-chapter-detail');
+        const progressTextChapterDetail = document.getElementById('progress-text-chapter-detail');
+        // Removidos elementos DOM do chat anterior
+
+        // --- Funções do Checklist (Inalteradas) ---
+         function calculateSubtopicProgress(subtopicosObj) { /* ... */ }
+         function calculateAllProgress() { /* ... */ }
+         function updateProgressDisplay() { /* ... */ }
+         function renderMainScreen() { /* ... */ }
+         function renderChapterDetail(livroIndex, capituloIndex) { /* ... */ }
+         function showChapterDetail(livroIndex, capituloIndex) { /* ... */ }
+         function showMainScreen() { /* ... */ }
+         function handleCheckboxChange(event) { /* ... */ }
+         function toggleBook(livroIndex) { /* ... */ }
+         function saveProgress() { /* ... */ }
+         function loadProgress() { /* ... */ }
+         // Colar as definições completas das funções do checklist aqui, da versão anterior
+
+         // --- Funções do Checklist COMPLETAS (coladas da versão anterior) ---
+         function calculateSubtopicProgress(subtopicosObj) {
+            let total = 0; let completed = 0;
+            for (const key in subtopicosObj) { if (Array.isArray(subtopicosObj[key])) { subtopicosObj[key].forEach(item => { if (item.hasOwnProperty('concluido')) { total++; if (item.concluido) completed++; } }); } }
+            return total === 0 ? 0 : Math.round((completed / total) * 100);
+        }
+        function calculateAllProgress() {
+            let totalItems = 0; let completedItems = 0; const bookProgress = []; const chapterProgress = [];
+            currentData.forEach((livro, livroIndex) => { let livroTotal = 0; let livroCompleted = 0; livro.capitulos.forEach((cap, capIndex) => { let capTotal = 0; let capCompleted = 0; for (const key in cap.subtopicos) { if (Array.isArray(cap.subtopicos[key])) { cap.subtopicos[key].forEach(item => { if (item.hasOwnProperty('concluido')) { capTotal++; if (item.concluido) capCompleted++; } }); } } livroTotal += capTotal; livroCompleted += capCompleted; totalItems += capTotal; completedItems += capCompleted; const progress = capTotal === 0 ? 0 : Math.round((capCompleted / capTotal) * 100); chapterProgress.push({ livro: livroIndex, capitulo: capIndex, progress: progress }); }); const progress = livroTotal === 0 ? 0 : Math.round((livroCompleted / livroTotal) * 100); bookProgress.push(progress); });
+            const totalProgress = totalItems === 0 ? 0 : Math.round((completedItems / totalItems) * 100); return { totalProgress, bookProgress, chapterProgress, totalItems, completedItems };
+        }
+        function updateProgressDisplay() {
+            const { totalProgress, bookProgress, chapterProgress } = calculateAllProgress();
+            progressBarTotal.style.width = `${totalProgress}%`; progressBarTotal.textContent = totalProgress > 10 ? `${totalProgress}%` : ''; progressTextTotal.textContent = `${totalProgress}%`;
+            currentData.forEach((livro, index) => { const bar = document.getElementById(`progress-bar-book-${index}`); const text = document.getElementById(`progress-text-book-${index}`); if(bar && text) { const progress = bookProgress[index]; bar.style.width = `${progress}%`; bar.textContent = progress > 10 ? `${progress}%` : ''; text.textContent = `${progress}%`; } });
+             chapterProgress.forEach(cp => { const bar = document.getElementById(`progress-bar-chapter-${cp.livro}-${cp.capitulo}`); const text = document.getElementById(`progress-text-chapter-${cp.livro}-${cp.capitulo}`); if (bar && text) { bar.style.width = `${cp.progress}%`; text.textContent = `${cp.progress}%`; } });
+            if (currentView === 'chapter' && currentChapter.livroIndex !== -1 && currentChapter.capituloIndex !== -1 && currentData[currentChapter.livroIndex] && currentData[currentChapter.livroIndex].capitulos[currentChapter.capituloIndex]) { // Checagem extra
+                const currentCapProgress = chapterProgress.find(cp => cp.livro === currentChapter.livroIndex && cp.capitulo === currentChapter.capituloIndex)?.progress || 0;
+                 progressBarChapterDetail.style.width = `${currentCapProgress}%`; progressBarChapterDetail.textContent = currentCapProgress > 10 ? `${currentCapProgress}%` : ''; progressTextChapterDetail.textContent = `${currentCapProgress}%`;
+                 const capitulo = currentData[currentChapter.livroIndex].capitulos[currentChapter.capituloIndex];
+                 const titleElement = document.getElementById('chapter-title');
+                 if (titleElement) titleElement.textContent = `Livro ${currentChapter.livroIndex + 1} - Cap ${capitulo.capitulo}: ${capitulo.tituloCapitulo}`;
+            }
+        }
+       function renderMainScreen() {
+            console.log('Renderizando tela principal...', currentData);
+            
+            // Remove o status de carregamento
+            const loadingStatus = document.getElementById('loading-status');
+            if (loadingStatus) {
+                loadingStatus.style.display = 'none';
+            }
+            
+            booksListDiv.innerHTML = ''; // Limpa antes de renderizar
+            
+            if (!currentData || currentData.length === 0) {
+                console.error('currentData está vazio ou inválido');
+                booksListDiv.innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        <h3 class="font-bold">❌ Erro: Dados não carregaram</h3>
+                        <p>currentData está vazio. Verifique o console para mais detalhes.</p>
+                        <button onclick="location.reload()" class="mt-2 bg-red-500 text-white px-3 py-1 rounded text-sm">
+                            Recarregar Página
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            currentData.forEach((livro, livroIndex) => {
+                console.log(`Renderizando livro ${livroIndex}:`, livro);
+                const isBookExpanded = localStorage.getItem(`book-${livroIndex}-expanded`) !== 'false';
+                console.log(`Livro ${livroIndex} expandido:`, isBookExpanded);
+                
+                const bookDiv = document.createElement('div'); 
+                bookDiv.className = `bg-white rounded-lg shadow border border-gray-200 ${isBookExpanded ? '' : 'collapsed'}`; 
+                bookDiv.id = `book-${livroIndex}`;
+                
+                const bookHeader = document.createElement('div'); 
+                bookHeader.className = 'p-4 cursor-pointer flex justify-between items-center'; 
+                bookHeader.onclick = () => toggleBook(livroIndex);
+                
+                const bookTitle = document.createElement('h2'); 
+                bookTitle.className = 'text-lg md:text-xl font-semibold text-gray-700 flex items-center'; 
+                bookTitle.innerHTML = `<span class="toggle-icon mr-2"></span> ${livro.tituloLivro}`; 
+                bookHeader.appendChild(bookTitle);
+                
+                const bookProgressDiv = document.createElement('div'); 
+                bookProgressDiv.className = 'w-1/3 md:w-1/4 ml-4'; 
+                bookProgressDiv.innerHTML = `<div class="progress-bar-bg"><div id="progress-bar-book-${livroIndex}" class="progress-bar-fill"></div></div><p id="progress-text-book-${livroIndex}" class="text-right text-xs font-medium text-gray-600 mt-1">0%</p>`; 
+                bookHeader.appendChild(bookProgressDiv); 
+                bookDiv.appendChild(bookHeader);
+                
+                const chaptersList = document.createElement('ul'); 
+                chaptersList.className = `border-t border-gray-200 ${isBookExpanded ? '' : 'hidden'}`; 
+                chaptersList.id = `chapters-list-${livroIndex}`;
+                
+                if(livro.capitulos && Array.isArray(livro.capitulos)) {
+                    console.log(`Livro ${livroIndex} tem ${livro.capitulos.length} capítulos`);
+                    livro.capitulos.forEach((cap, capIndex) => {
+                        const li = document.createElement('li'); 
+                        li.className = 'border-b border-gray-100 last:border-b-0 chapter-item cursor-pointer transition duration-150 ease-in-out';
+                        li.innerHTML = `<div class="p-3 px-4 flex justify-between items-center" onclick="showChapterDetail(${livroIndex}, ${capIndex})"><span class="text-gray-700">Cap ${cap.capitulo}: ${cap.tituloCapitulo}</span><div class="w-1/4 md:w-1/5 ml-2 text-right"><div class="progress-bar-bg !h-3"><div id="progress-bar-chapter-${livroIndex}-${capIndex}" class="progress-bar-fill !text-transparent"></div></div><p id="progress-text-chapter-${livroIndex}-${capIndex}" class="text-xs font-medium text-gray-500">0%</p></div></div>`; 
+                        chaptersList.appendChild(li);
+                    });
+                } else {
+                    console.error(`Livro ${livroIndex} não tem capítulos válidos:`, livro.capitulos);
+                }
+                
+                bookDiv.appendChild(chaptersList); 
+                booksListDiv.appendChild(bookDiv);
+            });
+            
+            updateProgressDisplay();
+            
+            // Adiciona informação de sucesso
+            const successDiv = document.createElement('div');
+            successDiv.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mt-4';
+            successDiv.innerHTML = `
+                <p>✅ <strong>Dados carregados com sucesso!</strong></p>
+                <p class="text-sm">Renderizados ${currentData.length} livros com ${currentData.reduce((total, livro) => total + (livro.capitulos?.length || 0), 0)} capítulos.</p>
+            `;
+            booksListDiv.appendChild(successDiv);
+            
+            console.log(`Renderização concluída: ${currentData.length} livros, ${currentData.reduce((total, livro) => total + (livro.capitulos?.length || 0), 0)} capítulos`);
+        }
+        function renderChapterDetail(livroIndex, capituloIndex) {
+             if (!currentData[livroIndex] || !currentData[livroIndex].capitulos[capituloIndex]) {
+                 console.error("Dados inválidos para renderChapterDetail:", livroIndex, capituloIndex);
+                 showMainScreen(); // Volta para tela principal se dados inválidos
+                 return;
+             }
+            const capitulo = currentData[livroIndex].capitulos[capituloIndex]; currentChapter = { livroIndex, capituloIndex }; chapterContentDiv.innerHTML = ''; // Limpa antes de renderizar
+            const subtopicSections = [{ title: 'TÓPICOS', key: 'topicos'}, { title: 'DIÁLOGOS', key: 'dialogos' },{ title: 'VOCABULÁRIO', key: 'vocabulario' }, { title: 'GRAMÁTICA E ESTRUTURAS', key: 'gramatica' }, { title: 'TEXTO(S)', key: 'textos' }, { title: 'APRESENTAÇÃO(ÕES)', key: 'apresentacoes' }, { title: 'EXERCÍCIOS', key: 'exercicios' }, { title: 'CARACTERES (HANZI)', key: 'hanzi' }];
+             subtopicSections.forEach(section => { const items = capitulo.subtopicos[section.key]; if (items && Array.isArray(items) && items.length > 0) { const sectionDiv = document.createElement('div'); const sectionTitle = document.createElement('h3'); sectionTitle.className = 'text-md font-semibold mb-2 text-gray-600 border-b pb-1'; sectionTitle.textContent = section.title; sectionDiv.appendChild(sectionTitle); const ul = document.createElement('ul'); ul.className = 'space-y-1'; items.forEach(item => { const li = document.createElement('li'); li.className = `flex items-center text-sm ${item.concluido ? 'completed-item' : ''}`; li.innerHTML = `<input type="checkbox" id="${item.id}" data-livro="${livroIndex}" data-capitulo="${capituloIndex}" data-key="${section.key}" data-itemid="${item.id}" ${item.concluido ? 'checked' : ''} class="mr-2 h-4 w-4 rounded border-gray-300 text-emerald-500 focus:ring-emerald-400 cursor-pointer"><label for="${item.id}" class="text-gray-700 cursor-pointer">${item.texto}</label>`; const checkbox = li.querySelector('input[type="checkbox"]'); if(checkbox) { checkbox.addEventListener('change', handleCheckboxChange); } ul.appendChild(li); }); sectionDiv.appendChild(ul); chapterContentDiv.appendChild(sectionDiv); } });
+            updateProgressDisplay(); // Atualiza a barra de progresso do capítulo
+
+            // --- INÍCIO DA ADIÇÃO: Seção de Notas ---
+            const notesSection = document.createElement('div');
+            notesSection.className = 'mt-6 pt-4 border-t border-gray-200'; // Margem e separador
+            
+            const notesTitle = document.createElement('h3');
+            notesTitle.className = 'text-md font-semibold mb-2 text-gray-600';
+            notesTitle.textContent = 'NOTAS DO CAPÍTULO';
+            notesSection.appendChild(notesTitle);
+            
+            const notesTextarea = document.createElement('textarea');
+            const notesKey = `mandarinNotes-l${livroIndex}c${capituloIndex}`; // Chave única para localStorage
+            
+            notesTextarea.id = `notes-${livroIndex}-${capituloIndex}`;
+            notesTextarea.className = 'notes-textarea';
+            notesTextarea.placeholder = 'Digite seus comentários, dúvidas ou notas sobre este capítulo...';
+            
+            // Carrega as notas salvas do localStorage
+            notesTextarea.value = localStorage.getItem(notesKey) || '';
+            
+            // Salva as notas automaticamente ao digitar (com um pequeno atraso para eficiência)
+            let debounceTimer;
+            notesTextarea.addEventListener('keyup', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    localStorage.setItem(notesKey, notesTextarea.value);
+                }, 300); // Salva 300ms após o usuário parar de digitar
+            });
+            
+            notesSection.appendChild(notesTextarea);
+            chapterContentDiv.appendChild(notesSection);
+            // --- FIM DA ADIÇÃO ---
+        }
+       function showChapterDetail(livroIndex, capituloIndex) { currentView = 'chapter'; mainScreen.classList.add('hidden'); chapterScreen.classList.remove('hidden'); renderChapterDetail(livroIndex, capituloIndex); window.scrollTo(0, 0); }
+       function showMainScreen() { currentView = 'main'; chapterScreen.classList.add('hidden'); mainScreen.classList.remove('hidden'); currentChapter = { livroIndex: -1, capituloIndex: -1 }; renderMainScreen(); } // Renderiza main screen ao voltar
+       function handleCheckboxChange(event) {
+            const checkbox = event.target; const livroIndex = parseInt(checkbox.dataset.livro); const capIndex = parseInt(checkbox.dataset.capitulo); const key = checkbox.dataset.key; const itemId = checkbox.dataset.itemid; const isChecked = checkbox.checked;
+            try { const item = currentData[livroIndex].capitulos[capIndex].subtopicos[key].find(i => i.id === itemId); if (item) { item.concluido = isChecked; checkbox.closest('li').classList.toggle('completed-item', isChecked); saveProgress(); updateProgressDisplay(); } else { console.error("Item not found:", itemId, "in", key); } } catch (e) { console.error("Error updating item state:", e, {livroIndex, capIndex, key, itemId}); }
+        }
+       function toggleBook(livroIndex) { const bookDiv = document.getElementById(`book-${livroIndex}`); const chaptersList = document.getElementById(`chapters-list-${livroIndex}`); if(bookDiv && chaptersList) { const isCollapsed = bookDiv.classList.toggle('collapsed'); chaptersList.classList.toggle('hidden'); localStorage.setItem(`book-${livroIndex}-expanded`, !isCollapsed); } else { console.error("Could not find book elements for toggling:", livroIndex); } }
+       function saveProgress() { try { localStorage.setItem('mandarinProgressData', JSON.stringify(currentData)); } catch (e) { console.error("Erro ao salvar progresso:", e); alert("Erro ao salvar progresso. Pode ser que o armazenamento local esteja cheio.");} } // Adiciona alerta
+        function loadProgress() {
+            const savedData = localStorage.getItem('mandarinProgressData'); let dataToUse = checklistData; // Usa checklistData como padrão
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+                    // Validação básica da estrutura salva
+                    if (Array.isArray(parsedData) && parsedData.length === checklistData.length &&
+                        parsedData.every(book => book && Array.isArray(book.capitulos)))
+                    {
+                        // Merge profundo para preservar estrutura e IDs originais, atualizando apenas 'concluido'
+                        dataToUse = checklistData.map((bookDefault, bookIndex) => ({
+                            ...bookDefault,
+                            capitulos: bookDefault.capitulos.map((chapterDefault, chapterIndex) => {
+                                const savedChapter = parsedData[bookIndex]?.capitulos[chapterIndex];
+                                const mergedSubtopicos = {};
+                                for (const key in chapterDefault.subtopicos) {
+                                    if (Array.isArray(chapterDefault.subtopicos[key])) {
+                                        mergedSubtopicos[key] = chapterDefault.subtopicos[key].map(itemDefault => {
+                                            const savedItem = savedChapter?.subtopicos?.[key]?.find(i => i.id === itemDefault.id);
+                                            // Garante que 'concluido' seja boolean
+                                            const concluidoState = savedItem ? !!savedItem.concluido : false;
+                                            return { ...itemDefault, concluido: concluidoState };
+                                        });
+                                    }
+                                }
+                                return { ...chapterDefault, subtopicos: mergedSubtopicos };
+                            })
+                        }));
+                        console.log("Progresso carregado do LocalStorage.");
+                    } else {
+                        console.warn("Estrutura salva inválida ou incompatível. Usando dados padrão.");
+                        localStorage.removeItem('mandarinProgressData'); // Limpa dados inválidos
+                        dataToUse = checklistData; // Garante que está usando o padrão
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar/parsear progresso:", e);
+                    localStorage.removeItem('mandarinProgressData'); // Limpa dados corrompidos
+                    dataToUse = checklistData; // Garante que está usando o padrão
+                }
+            } else {
+                console.log("Nenhum progresso salvo encontrado. Usando dados padrão.");
+                dataToUse = checklistData; // Garante que está usando o padrão
+            }
+             // Cria uma cópia profunda para evitar mutações inesperadas no objeto original
+            currentData = JSON.parse(JSON.stringify(dataToUse));
+        }
+        // --- FIM DAS FUNÇÕES DO CHECKLIST ---
+
+        // --- Função para resetar dados ---
+        function resetData() {
+            if (confirm('Tem certeza que deseja resetar todos os dados? Isso apagará todo o progresso salvo.')) {
+                // Remove todos os dados do localStorage
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('mandarinProgressData') || 
+                        key.startsWith('mandarinNotes-') || 
+                        key.startsWith('book-') && key.endsWith('-expanded')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                
+                console.log('Dados resetados');
+                alert('Dados resetados! A página será recarregada.');
+                location.reload();
+            }
+        }
+
+        // --- Inicialização ---
+         function init() {
+            console.log('=== INICIANDO APLICATIVO ===');
+            console.log('checklistData original:', checklistData);
+            
+            try {
+                loadProgress();
+                console.log('currentData após loadProgress:', currentData);
+                
+                if (!currentData || currentData.length === 0) {
+                    console.error('ERRO CRÍTICO: currentData está vazio!');
+                    alert('Erro: Dados não carregaram. Recarregando página...');
+                    location.reload();
+                    return;
+                }
+                
+                renderMainScreen();
+                console.log('=== APLICATIVO INICIADO COM SUCESSO ===');
+                
+            } catch (error) {
+                console.error('ERRO na inicialização:', error);
+                alert('Erro crítico na inicialização: ' + error.message);
+            }
+            
+            if(backButton) { // Checa se backButton existe
+                 backButton.addEventListener('click', showMainScreen);
+            } else {
+                 console.error("Back button not found");
+            }
+            
+            // Adiciona event listener para o botão de reset
+            const resetButton = document.getElementById('reset-button');
+            if(resetButton) {
+                resetButton.addEventListener('click', resetData);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+
+    <!-- Script do Chatbase Widget (COLE O SEU AQUI ou logo abaixo) -->
+    <script>
+    (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="lQAieVgUdlOSGG5P02Wx_";script.domain="www.chatbase.co";script.defer = true; document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+    </script>
+
+</body>
+</html>
+
+
+
