@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/leonhatori/Irmãos Mandarim/**)",
+      "WebFetch(domain:irmaosmandarim-curso.vercel.app)",
+      "Bash(open:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(vercel:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote add:*)",
+      "Bash(git pull:*)",
+      "Bash(git config:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
