@@ -988,21 +988,7 @@
             }
         });
 
-        // --- Funções do Checklist (Inalteradas) ---
-         function calculateSubtopicProgress(subtopicosObj) { /* ... */ }
-         function calculateAllProgress() { /* ... */ }
-         function updateProgressDisplay() { /* ... */ }
-         function renderMainScreen() { /* ... */ }
-         function renderChapterDetail(livroIndex, capituloIndex) { /* ... */ }
-         function showChapterDetail(livroIndex, capituloIndex) { /* ... */ }
-         function showMainScreen() { /* ... */ }
-         function handleCheckboxChange(event) { /* ... */ }
-         function toggleBook(livroIndex) { /* ... */ }
-         function saveProgress() { /* ... */ }
-         function loadProgress() { /* ... */ }
-         // Colar as definições completas das funções do checklist aqui, da versão anterior
-
-         // --- Funções do Checklist COMPLETAS (coladas da versão anterior) ---
+        // --- Funções do Checklist COMPLETAS ---
          function calculateSubtopicProgress(subtopicosObj) {
             let total = 0; let completed = 0;
             for (const key in subtopicosObj) { if (Array.isArray(subtopicosObj[key])) { subtopicosObj[key].forEach(item => { if (item.hasOwnProperty('concluido')) { total++; if (item.concluido) completed++; } }); } }
@@ -1539,9 +1525,12 @@
                     return;
                 }
                 
+                console.log('🎯 Antes de renderMainScreen');
                 renderMainScreen();
+                console.log('🎯 Depois de renderMainScreen');
                 
                 // Carregar PDF principal após renderização
+                console.log('🎯 Configurando setTimeout para PDF...');
                 setTimeout(() => {
                     console.log('🔍 Iniciando carregamento do PDF principal...');
                     
