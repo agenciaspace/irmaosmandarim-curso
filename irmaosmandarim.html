@@ -60,9 +60,9 @@
             </div>
             
             <!-- Layout Principal Dividido -->
-            <div class="flex flex-col lg:flex-row gap-4 h-screen lg:h-auto">
+            <div class="flex flex-row gap-4" style="height: 75vh;">
                 <!-- Área do PDF (50%) -->
-                <div class="w-full lg:w-1/2 bg-white rounded-lg shadow border border-gray-200">
+                <div class="w-1/2 bg-white rounded-lg shadow border border-gray-200">
                     <div class="p-3 border-b border-gray-200 flex justify-between items-center">
                         <h3 class="text-md font-semibold text-gray-700">📖 <span id="main-pdf-info">Selecione um livro</span></h3>
                         <div class="flex gap-2">
@@ -85,8 +85,8 @@
                 </div>
                 
                 <!-- Área dos Controles (50%) -->
-                <div class="w-full lg:w-1/2 flex flex-col">
-                    <div id="books-list" class="space-y-3 flex-1 overflow-y-auto" style="max-height: 70vh;"></div>
+                <div class="w-1/2 flex flex-col">
+                    <div id="books-list" class="space-y-3 flex-1 overflow-y-auto" style="height: 75vh;"></div>
                 </div>
             </div>
         </div>
@@ -1523,6 +1523,10 @@
          function init() {
             console.log('=== INICIANDO APLICATIVO ===');
             console.log('checklistData original:', checklistData);
+            console.log('DOM elements check:');
+            console.log('- mainPdfCanvas:', document.getElementById('main-pdf-canvas'));
+            console.log('- mainPdfLoading:', document.getElementById('main-pdf-loading'));
+            console.log('- mainPdfInfo:', document.getElementById('main-pdf-info'));
             
             try {
                 loadProgress();
