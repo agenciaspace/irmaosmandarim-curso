@@ -59,7 +59,7 @@
             <div id="books-list" class="space-y-4"></div>
         </div>
 
-        <!-- Tela de Detalhes do Capítulo (oculta e inalterada) -->
+        <!-- Tela de Detalhes do Capítulo -->
         <div id="chapter-screen" class="hidden">
              <button id="back-button" class="mb-4 text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out">&larr; Voltar</button>
              <h1 id="chapter-title" class="text-xl md:text-2xl font-bold mb-1 text-gray-800"></h1>
@@ -67,6 +67,41 @@
                  <div class="progress-bar-bg"><div id="progress-bar-chapter-detail" class="progress-bar-fill"></div></div>
                  <p id="progress-text-chapter-detail" class="text-right text-sm font-medium text-gray-600 mt-1">0%</p>
              </div>
+             
+             <!-- Botões de ação -->
+             <div class="mb-4 flex gap-2 flex-wrap">
+                 <button id="show-pdf-button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition">
+                     📖 Ver Livro PDF
+                 </button>
+                 <button id="toggle-annotations-button" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm transition">
+                     📝 Anotações
+                 </button>
+             </div>
+             
+             <!-- Visualizador de PDF (oculto inicialmente) -->
+             <div id="pdf-viewer" class="hidden mb-6 bg-white rounded-lg shadow border border-gray-200">
+                 <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                     <h3 class="text-lg font-semibold text-gray-700">📖 Visualizador do Livro</h3>
+                     <button id="close-pdf-button" class="text-gray-500 hover:text-gray-700">✕</button>
+                 </div>
+                 <div class="p-4">
+                     <iframe id="pdf-frame" src="" width="100%" height="600" class="border rounded"></iframe>
+                 </div>
+             </div>
+             
+             <!-- Painel de Anotações (oculto inicialmente) -->
+             <div id="annotations-panel" class="hidden mb-6 bg-white rounded-lg shadow border border-gray-200">
+                 <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                     <h3 class="text-lg font-semibold text-gray-700">📝 Anotações do Capítulo</h3>
+                     <button id="close-annotations-button" class="text-gray-500 hover:text-gray-700">✕</button>
+                 </div>
+                 <div class="p-4">
+                     <textarea id="chapter-annotations" class="w-full h-40 p-3 border border-gray-300 rounded-md resize-vertical" 
+                               placeholder="Digite suas anotações sobre este capítulo..."></textarea>
+                     <div class="mt-2 text-xs text-gray-500">💾 As anotações são salvas automaticamente</div>
+                 </div>
+             </div>
+             
              <div id="chapter-content" class="bg-white p-4 rounded-lg shadow space-y-4 border border-gray-200">
                 <!-- Conteúdo do checklist é gerado aqui -->
                 <!-- A seção de Notas será adicionada aqui via JS -->
@@ -621,7 +656,16 @@
         const progressTextTotal = document.getElementById('progress-text-total');
         const progressBarChapterDetail = document.getElementById('progress-bar-chapter-detail');
         const progressTextChapterDetail = document.getElementById('progress-text-chapter-detail');
-        // Removidos elementos DOM do chat anterior
+        
+        // --- Elementos do PDF Viewer e Anotações ---
+        const showPdfButton = document.getElementById('show-pdf-button');
+        const toggleAnnotationsButton = document.getElementById('toggle-annotations-button');
+        const pdfViewer = document.getElementById('pdf-viewer');
+        const closePdfButton = document.getElementById('close-pdf-button');
+        const pdfFrame = document.getElementById('pdf-frame');
+        const annotationsPanel = document.getElementById('annotations-panel');
+        const closeAnnotationsButton = document.getElementById('close-annotations-button');
+        const chapterAnnotationsTextarea = document.getElementById('chapter-annotations');
 
         // --- Funções do Checklist (Inalteradas) ---
          function calculateSubtopicProgress(subtopicosObj) { /* ... */ }
@@ -883,6 +927,62 @@
         }
         // --- FIM DAS FUNÇÕES DO CHECKLIST ---
 
+        // --- Funções do PDF Viewer e Anotações ---
+        function showPdfViewer() {
+            if (currentChapter.livroIndex === -1) return;
+            
+            const livroNumber = currentChapter.livroIndex + 1;
+            const pdfFileName = `Livro ${livroNumber} - Irmãos Mandarim.pdf`;
+            
+            // Para funcionar no Vercel, vamos usar um URL direto para o PDF
+            pdfFrame.src = pdfFileName;
+            pdfViewer.classList.remove('hidden');
+            
+            console.log(`Abrindo PDF: ${pdfFileName}`);
+        }
+        
+        function hidePdfViewer() {
+            pdfViewer.classList.add('hidden');
+            pdfFrame.src = '';
+        }
+        
+        function toggleAnnotationsPanel() {
+            const isHidden = annotationsPanel.classList.contains('hidden');
+            
+            if (isHidden) {
+                // Mostrar painel e carregar anotações
+                annotationsPanel.classList.remove('hidden');
+                loadChapterAnnotations();
+            } else {
+                // Esconder painel
+                annotationsPanel.classList.add('hidden');
+            }
+        }
+        
+        function hideAnnotationsPanel() {
+            annotationsPanel.classList.add('hidden');
+        }
+        
+        function loadChapterAnnotations() {
+            if (currentChapter.livroIndex === -1 || currentChapter.capituloIndex === -1) return;
+            
+            const annotationsKey = `mandarinAnnotations-l${currentChapter.livroIndex}c${currentChapter.capituloIndex}`;
+            const savedAnnotations = localStorage.getItem(annotationsKey) || '';
+            
+            chapterAnnotationsTextarea.value = savedAnnotations;
+            console.log(`Carregadas anotações para L${currentChapter.livroIndex + 1}C${currentChapter.capituloIndex}: ${savedAnnotations.length} caracteres`);
+        }
+        
+        function saveChapterAnnotations() {
+            if (currentChapter.livroIndex === -1 || currentChapter.capituloIndex === -1) return;
+            
+            const annotationsKey = `mandarinAnnotations-l${currentChapter.livroIndex}c${currentChapter.capituloIndex}`;
+            const annotations = chapterAnnotationsTextarea.value;
+            
+            localStorage.setItem(annotationsKey, annotations);
+            console.log(`Salvas anotações para L${currentChapter.livroIndex + 1}C${currentChapter.capituloIndex}: ${annotations.length} caracteres`);
+        }
+
         // --- Função para resetar dados ---
         function resetData() {
             if (confirm('Tem certeza que deseja resetar todos os dados? Isso apagará todo o progresso salvo.')) {
@@ -929,6 +1029,34 @@
                  backButton.addEventListener('click', showMainScreen);
             } else {
                  console.error("Back button not found");
+            }
+            
+            // Event listeners para PDF viewer e anotações
+            if(showPdfButton) {
+                showPdfButton.addEventListener('click', showPdfViewer);
+            }
+            
+            if(closePdfButton) {
+                closePdfButton.addEventListener('click', hidePdfViewer);
+            }
+            
+            if(toggleAnnotationsButton) {
+                toggleAnnotationsButton.addEventListener('click', toggleAnnotationsPanel);
+            }
+            
+            if(closeAnnotationsButton) {
+                closeAnnotationsButton.addEventListener('click', hideAnnotationsPanel);
+            }
+            
+            // Auto-save para anotações
+            if(chapterAnnotationsTextarea) {
+                let annotationsDebounceTimer;
+                chapterAnnotationsTextarea.addEventListener('keyup', () => {
+                    clearTimeout(annotationsDebounceTimer);
+                    annotationsDebounceTimer = setTimeout(() => {
+                        saveChapterAnnotations();
+                    }, 300);
+                });
             }
             
         }
