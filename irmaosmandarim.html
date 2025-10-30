@@ -788,24 +788,45 @@
         
         // Funções do PDF principal na tela dividida
         async function loadMainPdf() {
+            console.log('=== INICIANDO loadMainPdf ===');
+            console.log('mainPdfCanvas:', mainPdfCanvas);
+            console.log('mainPdfLoading:', mainPdfLoading);
+            console.log('mainPdfInfo:', mainPdfInfo);
+            
+            if (!mainPdfCanvas) {
+                console.error('❌ mainPdfCanvas não encontrado!');
+                return;
+            }
+            
+            if (!mainPdfLoading) {
+                console.error('❌ mainPdfLoading não encontrado!');
+                return;
+            }
+            
             try {
                 mainPdfLoading.classList.remove('hidden');
+                mainPdfLoading.textContent = '📄 Carregando PDF principal...';
                 
                 // Carregar Livro 1 como padrão
                 const pdfUrl = 'Livro 1 - Irmãos Mandarim.pdf';
+                console.log('Tentando carregar:', pdfUrl);
+                
                 const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
                 mainPdfDoc = pdf;
                 mainTotalPages = pdf.numPages;
                 mainCurrentPage = 1;
                 
-                console.log(`PDF principal carregado: ${mainTotalPages} páginas`);
+                console.log(`✅ PDF principal carregado: ${mainTotalPages} páginas`);
                 await renderMainPdfPage();
                 updateMainPdfInfo();
                 
                 mainPdfLoading.classList.add('hidden');
             } catch (error) {
-                console.error('Erro ao carregar PDF principal:', error);
-                mainPdfLoading.innerHTML = '<span class="text-red-500">❌ Erro ao carregar PDF</span>';
+                console.error('❌ Erro ao carregar PDF principal:', error);
+                if (mainPdfLoading) {
+                    mainPdfLoading.innerHTML = '<span class="text-red-500">❌ Erro ao carregar PDF: ' + error.message + '</span>';
+                    mainPdfLoading.classList.remove('hidden');
+                }
             }
         }
         
@@ -1514,8 +1535,11 @@
                 
                 renderMainScreen();
                 
-                // Carregar PDF principal
-                loadMainPdf();
+                // Carregar PDF principal após renderização
+                setTimeout(() => {
+                    console.log('Iniciando carregamento do PDF principal...');
+                    loadMainPdf();
+                }, 100);
                 
                 console.log('=== APLICATIVO INICIADO COM SUCESSO ===');
                 
