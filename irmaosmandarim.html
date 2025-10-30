@@ -44,12 +44,6 @@
         <div id="main-screen">
             <h1 class="text-2xl md:text-3xl font-bold mb-4 text-gray-800 text-center">Meu Progresso Mandarim 📚</h1>
             
-            <!-- Botão para resetar dados (debug) -->
-            <div class="text-center mb-4">
-                <button id="reset-button" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm transition">
-                    🔄 Resetar Dados (Debug)
-                </button>
-            </div>
             
             <div class="bg-white p-4 rounded-lg shadow mb-6 border border-gray-200">
                 <h2 class="text-lg font-semibold mb-2 text-gray-700">Progresso Total</h2>
@@ -650,9 +644,50 @@
             return total === 0 ? 0 : Math.round((completed / total) * 100);
         }
         function calculateAllProgress() {
-            let totalItems = 0; let completedItems = 0; const bookProgress = []; const chapterProgress = [];
-            currentData.forEach((livro, livroIndex) => { let livroTotal = 0; let livroCompleted = 0; livro.capitulos.forEach((cap, capIndex) => { let capTotal = 0; let capCompleted = 0; for (const key in cap.subtopicos) { if (Array.isArray(cap.subtopicos[key])) { cap.subtopicos[key].forEach(item => { if (item.hasOwnProperty('concluido')) { capTotal++; if (item.concluido) capCompleted++; } }); } } livroTotal += capTotal; livroCompleted += capCompleted; totalItems += capTotal; completedItems += capCompleted; const progress = capTotal === 0 ? 0 : Math.round((capCompleted / capTotal) * 100); chapterProgress.push({ livro: livroIndex, capitulo: capIndex, progress: progress }); }); const progress = livroTotal === 0 ? 0 : Math.round((livroCompleted / livroTotal) * 100); bookProgress.push(progress); });
-            const totalProgress = totalItems === 0 ? 0 : Math.round((completedItems / totalItems) * 100); return { totalProgress, bookProgress, chapterProgress, totalItems, completedItems };
+            let totalItems = 0; 
+            let completedItems = 0; 
+            const bookProgress = []; 
+            const chapterProgress = [];
+            
+            currentData.forEach((livro, livroIndex) => { 
+                let livroTotal = 0; 
+                let livroCompleted = 0; 
+                
+                livro.capitulos.forEach((cap, capIndex) => { 
+                    let capTotal = 0; 
+                    let capCompleted = 0; 
+                    
+                    for (const key in cap.subtopicos) { 
+                        if (Array.isArray(cap.subtopicos[key])) { 
+                            cap.subtopicos[key].forEach(item => { 
+                                if (item.hasOwnProperty('concluido')) { 
+                                    capTotal++; 
+                                    if (item.concluido) capCompleted++; 
+                                } 
+                            }); 
+                        } 
+                    } 
+                    
+                    livroTotal += capTotal; 
+                    livroCompleted += capCompleted; 
+                    totalItems += capTotal; 
+                    completedItems += capCompleted; 
+                    
+                    const progress = capTotal === 0 ? 0 : Math.round((capCompleted / capTotal) * 100); 
+                    chapterProgress.push({ livro: livroIndex, capitulo: capIndex, progress: progress }); 
+                }); 
+                
+                const progress = livroTotal === 0 ? 0 : Math.round((livroCompleted / livroTotal) * 100); 
+                bookProgress.push(progress); 
+                
+                console.log(`Livro ${livroIndex + 1}: ${livroCompleted}/${livroTotal} itens (${progress}%)`);
+            });
+            
+            const totalProgress = totalItems === 0 ? 0 : Math.round((completedItems / totalItems) * 100); 
+            console.log(`PROGRESSO TOTAL: ${completedItems}/${totalItems} itens (${totalProgress}%)`);
+            console.log('Progresso por livro:', bookProgress);
+            
+            return { totalProgress, bookProgress, chapterProgress, totalItems, completedItems };
         }
         function updateProgressDisplay() {
             const { totalProgress, bookProgress, chapterProgress } = calculateAllProgress();
@@ -896,11 +931,6 @@
                  console.error("Back button not found");
             }
             
-            // Adiciona event listener para o botão de reset
-            const resetButton = document.getElementById('reset-button');
-            if(resetButton) {
-                resetButton.addEventListener('click', resetData);
-            }
         }
 
         document.addEventListener('DOMContentLoaded', init);
