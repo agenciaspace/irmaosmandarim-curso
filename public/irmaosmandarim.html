@@ -61,56 +61,111 @@
 
         <!-- Tela de Detalhes do Capítulo -->
         <div id="chapter-screen" class="hidden">
-             <button id="back-button" class="mb-4 text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out">&larr; Voltar</button>
-             <h1 id="chapter-title" class="text-xl md:text-2xl font-bold mb-1 text-gray-800"></h1>
-              <div class="mb-4">
-                 <div class="progress-bar-bg"><div id="progress-bar-chapter-detail" class="progress-bar-fill"></div></div>
-                 <p id="progress-text-chapter-detail" class="text-right text-sm font-medium text-gray-600 mt-1">0%</p>
+             <div class="mb-4">
+                 <button id="back-button" class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out">&larr; Voltar</button>
+                 <h1 id="chapter-title" class="text-xl md:text-2xl font-bold mb-2 text-gray-800"></h1>
+                 <div class="mb-4">
+                     <div class="progress-bar-bg"><div id="progress-bar-chapter-detail" class="progress-bar-fill"></div></div>
+                     <p id="progress-text-chapter-detail" class="text-right text-sm font-medium text-gray-600 mt-1">0%</p>
+                 </div>
              </div>
              
              <!-- Botões de ação -->
              <div class="mb-4 flex gap-2 flex-wrap">
-                 <button id="show-pdf-button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition">
-                     📖 Ver Livro PDF
+                 <button id="show-pdf-button" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm transition">
+                     📖 <span class="hidden sm:inline">Ver</span> PDF
                  </button>
-                 <button id="toggle-annotations-button" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm transition">
-                     📝 Anotações
+                 <button id="toggle-annotations-button" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm transition">
+                     📝 <span class="hidden sm:inline">Anotações</span>
+                 </button>
+                 <button id="hide-pdf-button" class="hidden bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm transition">
+                     ✕ <span class="hidden sm:inline">Fechar PDF</span>
                  </button>
              </div>
              
-             <!-- Visualizador de PDF (oculto inicialmente) -->
-             <div id="pdf-viewer" class="hidden mb-6 bg-white rounded-lg shadow border border-gray-200">
-                 <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-                     <h3 class="text-lg font-semibold text-gray-700">📖 Visualizador do Livro</h3>
-                     <button id="close-pdf-button" class="text-gray-500 hover:text-gray-700">✕</button>
-                 </div>
-                 <div class="p-4">
-                     <iframe id="pdf-frame" src="" width="100%" height="600" class="border rounded"></iframe>
+             <!-- Layout dividido: PDF + Controles -->
+             <div id="split-layout" class="hidden">
+                 <!-- Área do PDF (lado esquerdo) -->
+                 <div class="flex flex-col lg:flex-row gap-4">
+                     <div id="pdf-section" class="lg:w-1/2">
+                         <div class="bg-white rounded-lg shadow border border-gray-200">
+                             <div class="p-3 border-b border-gray-200 flex justify-between items-center">
+                                 <h3 class="text-md font-semibold text-gray-700">📖 <span id="pdf-chapter-info"></span></h3>
+                                 <div class="flex gap-2">
+                                     <button id="prev-page" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm">‹ Anterior</button>
+                                     <span id="page-info" class="text-sm text-gray-600"></span>
+                                     <button id="next-page" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm">Próxima ›</button>
+                                 </div>
+                             </div>
+                             <div class="p-2">
+                                 <iframe id="pdf-frame" src="" width="100%" height="500" class="border rounded"></iframe>
+                             </div>
+                         </div>
+                     </div>
+                     
+                     <!-- Área dos controles (lado direito) -->
+                     <div id="controls-section" class="lg:w-1/2">
+                         <!-- Painel de Anotações -->
+                         <div id="annotations-panel" class="mb-4 bg-white rounded-lg shadow border border-gray-200">
+                             <div class="p-3 border-b border-gray-200">
+                                 <h3 class="text-md font-semibold text-gray-700">📝 Anotações do Capítulo</h3>
+                             </div>
+                             <div class="p-3">
+                                 <textarea id="chapter-annotations" class="w-full h-32 p-3 border border-gray-300 rounded-md resize-vertical text-sm" 
+                                           placeholder="Digite suas anotações sobre este capítulo..."></textarea>
+                                 <div class="mt-2 text-xs text-gray-500">💾 Salvas automaticamente</div>
+                             </div>
+                         </div>
+                         
+                         <!-- Conteúdo do checklist -->
+                         <div id="chapter-content-split" class="bg-white rounded-lg shadow border border-gray-200 max-h-96 overflow-y-auto">
+                             <div class="p-3 border-b border-gray-200">
+                                 <h3 class="text-md font-semibold text-gray-700">📋 Checklist do Capítulo</h3>
+                             </div>
+                             <div class="p-3 space-y-3">
+                                 <!-- Conteúdo será gerado aqui -->
+                             </div>
+                         </div>
+                     </div>
                  </div>
              </div>
              
-             <!-- Painel de Anotações (oculto inicialmente) -->
-             <div id="annotations-panel" class="hidden mb-6 bg-white rounded-lg shadow border border-gray-200">
-                 <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-                     <h3 class="text-lg font-semibold text-gray-700">📝 Anotações do Capítulo</h3>
-                     <button id="close-annotations-button" class="text-gray-500 hover:text-gray-700">✕</button>
+             <!-- Layout tradicional (quando PDF não está visível) -->
+             <div id="traditional-layout">
+                 <div id="chapter-content" class="bg-white p-4 rounded-lg shadow space-y-4 border border-gray-200">
+                     <!-- Conteúdo do checklist é gerado aqui -->
                  </div>
-                 <div class="p-4">
-                     <textarea id="chapter-annotations" class="w-full h-40 p-3 border border-gray-300 rounded-md resize-vertical" 
-                               placeholder="Digite suas anotações sobre este capítulo..."></textarea>
-                     <div class="mt-2 text-xs text-gray-500">💾 As anotações são salvas automaticamente</div>
-                 </div>
-             </div>
-             
-             <div id="chapter-content" class="bg-white p-4 rounded-lg shadow space-y-4 border border-gray-200">
-                <!-- Conteúdo do checklist é gerado aqui -->
-                <!-- A seção de Notas será adicionada aqui via JS -->
              </div>
         </div>
     </div>
 
     <!-- Script Principal do Checklist -->
     <script>
+        // --- Mapeamento de Páginas dos Capítulos ---
+        const chapterPageMapping = {
+            0: { // Livro 1
+                0: { startPage: 10, endPage: 25 },   // Introdução
+                1: { startPage: 26, endPage: 45 },   // 你是巴西人吗?
+                2: { startPage: 46, endPage: 65 },   // 你有书吗?
+                3: { startPage: 66, endPage: 85 },   // 他们是谁?
+                4: { startPage: 86, endPage: 105 },  // 你学习汉语吗?
+                5: { startPage: 106, endPage: 125 }, // 今天几月几号?
+                6: { startPage: 126, endPage: 145 }, // 你几点起床?
+                7: { startPage: 146, endPage: 165 }, // 请问,学校在哪里?
+                8: { startPage: 166, endPage: 185 }  // 你的房间里有什么?
+            },
+            1: { // Livro 2  
+                9: { startPage: 10, endPage: 30 },   // 你想喝什么?
+                10: { startPage: 31, endPage: 50 },  // 这个多少钱?
+                11: { startPage: 51, endPage: 70 },  // 我去买东西
+                12: { startPage: 71, endPage: 90 },  // 我们怎么去他的家?
+                13: { startPage: 91, endPage: 110 }, // 我跟朋友一起吃午饭
+                14: { startPage: 111, endPage: 130 }, // 她不能去,她要休息
+                15: { startPage: 131, endPage: 150 }, // 从这里到长城怎么去?
+                16: { startPage: 151, endPage: 170 }  // 你在做什么呢?
+            }
+        };
+
         // --- Estrutura de Dados do Checklist (Inalterada) ---
         const checklistData = [
             // ... (toda a estrutura de dados completa, como na versão anterior) ...
@@ -659,13 +714,24 @@
         
         // --- Elementos do PDF Viewer e Anotações ---
         const showPdfButton = document.getElementById('show-pdf-button');
+        const hidePdfButton = document.getElementById('hide-pdf-button');
         const toggleAnnotationsButton = document.getElementById('toggle-annotations-button');
-        const pdfViewer = document.getElementById('pdf-viewer');
-        const closePdfButton = document.getElementById('close-pdf-button');
         const pdfFrame = document.getElementById('pdf-frame');
-        const annotationsPanel = document.getElementById('annotations-panel');
-        const closeAnnotationsButton = document.getElementById('close-annotations-button');
         const chapterAnnotationsTextarea = document.getElementById('chapter-annotations');
+        
+        // --- Elementos do Layout Dividido ---
+        const splitLayout = document.getElementById('split-layout');
+        const traditionalLayout = document.getElementById('traditional-layout');
+        const chapterContentSplit = document.getElementById('chapter-content-split');
+        const pdfChapterInfo = document.getElementById('pdf-chapter-info');
+        const pageInfo = document.getElementById('page-info');
+        const prevPageButton = document.getElementById('prev-page');
+        const nextPageButton = document.getElementById('next-page');
+        
+        // --- Variáveis de controle do PDF ---
+        let currentPage = 1;
+        let startPage = 1;
+        let endPage = 1;
 
         // --- Funções do Checklist (Inalteradas) ---
          function calculateSubtopicProgress(subtopicosObj) { /* ... */ }
@@ -929,38 +995,136 @@
 
         // --- Funções do PDF Viewer e Anotações ---
         function showPdfViewer() {
-            if (currentChapter.livroIndex === -1) return;
+            if (currentChapter.livroIndex === -1 || currentChapter.capituloIndex === -1) return;
             
+            // Obter informações do capítulo
             const livroNumber = currentChapter.livroIndex + 1;
+            const capituloNumber = currentChapter.capituloIndex;
+            const pageMapping = chapterPageMapping[currentChapter.livroIndex];
+            
+            if (!pageMapping || !pageMapping[capituloNumber]) {
+                alert('Mapeamento de páginas não encontrado para este capítulo.');
+                return;
+            }
+            
+            // Configurar páginas do capítulo
+            const chapterPages = pageMapping[capituloNumber];
+            startPage = chapterPages.startPage;
+            endPage = chapterPages.endPage;
+            currentPage = startPage;
+            
+            // Configurar PDF
             const pdfFileName = `Livro ${livroNumber} - Irmãos Mandarim.pdf`;
+            loadPdfPage();
             
-            // Para funcionar no Vercel, vamos usar um URL direto para o PDF
-            pdfFrame.src = pdfFileName;
-            pdfViewer.classList.remove('hidden');
+            // Configurar interface
+            const capitulo = currentData[currentChapter.livroIndex].capitulos[currentChapter.capituloIndex];
+            pdfChapterInfo.textContent = `${capitulo.tituloCapitulo} (Páginas ${startPage}-${endPage})`;
             
-            console.log(`Abrindo PDF: ${pdfFileName}`);
+            // Renderizar checklist no layout dividido
+            renderChapterContentSplit();
+            
+            // Carregar anotações
+            loadChapterAnnotations();
+            
+            // Mostrar layout dividido
+            traditionalLayout.classList.add('hidden');
+            splitLayout.classList.remove('hidden');
+            showPdfButton.classList.add('hidden');
+            hidePdfButton.classList.remove('hidden');
+            
+            console.log(`Abrindo PDF: ${pdfFileName}, Páginas: ${startPage}-${endPage}`);
         }
         
         function hidePdfViewer() {
-            pdfViewer.classList.add('hidden');
+            // Esconder layout dividido
+            splitLayout.classList.add('hidden');
+            traditionalLayout.classList.remove('hidden');
+            hidePdfButton.classList.add('hidden');
+            showPdfButton.classList.remove('hidden');
+            
+            // Limpar PDF
             pdfFrame.src = '';
+            
+            console.log('PDF fechado');
         }
         
-        function toggleAnnotationsPanel() {
-            const isHidden = annotationsPanel.classList.contains('hidden');
+        function loadPdfPage() {
+            const livroNumber = currentChapter.livroIndex + 1;
+            const pdfFileName = `Livro ${livroNumber} - Irmãos Mandarim.pdf`;
             
-            if (isHidden) {
-                // Mostrar painel e carregar anotações
-                annotationsPanel.classList.remove('hidden');
-                loadChapterAnnotations();
-            } else {
-                // Esconder painel
-                annotationsPanel.classList.add('hidden');
+            // Carregar página específica do PDF
+            pdfFrame.src = `${pdfFileName}#page=${currentPage}`;
+            
+            // Atualizar informações da página
+            pageInfo.textContent = `${currentPage}/${endPage}`;
+            
+            // Controlar botões
+            prevPageButton.disabled = currentPage <= startPage;
+            nextPageButton.disabled = currentPage >= endPage;
+            
+            prevPageButton.classList.toggle('opacity-50', currentPage <= startPage);
+            nextPageButton.classList.toggle('opacity-50', currentPage >= endPage);
+        }
+        
+        function prevPage() {
+            if (currentPage > startPage) {
+                currentPage--;
+                loadPdfPage();
             }
         }
         
-        function hideAnnotationsPanel() {
-            annotationsPanel.classList.add('hidden');
+        function nextPage() {
+            if (currentPage < endPage) {
+                currentPage++;
+                loadPdfPage();
+            }
+        }
+        
+        function renderChapterContentSplit() {
+            if (currentChapter.livroIndex === -1 || currentChapter.capituloIndex === -1) return;
+            
+            const capitulo = currentData[currentChapter.livroIndex].capitulos[currentChapter.capituloIndex];
+            const contentDiv = chapterContentSplit.querySelector('.p-3.space-y-3');
+            contentDiv.innerHTML = '';
+            
+            const subtopicSections = [
+                { title: 'TÓPICOS', key: 'topicos'},
+                { title: 'DIÁLOGOS', key: 'dialogos' },
+                { title: 'VOCABULÁRIO', key: 'vocabulario' }, 
+                { title: 'GRAMÁTICA', key: 'gramatica' }, 
+                { title: 'EXERCÍCIOS', key: 'exercicios' }, 
+                { title: 'HANZI', key: 'hanzi' }
+            ];
+            
+            subtopicSections.forEach(section => { 
+                const items = capitulo.subtopicos[section.key]; 
+                if (items && Array.isArray(items) && items.length > 0) { 
+                    const sectionDiv = document.createElement('div'); 
+                    const sectionTitle = document.createElement('h4'); 
+                    sectionTitle.className = 'text-sm font-semibold mb-1 text-gray-600 border-b pb-1'; 
+                    sectionTitle.textContent = section.title; 
+                    sectionDiv.appendChild(sectionTitle); 
+                    
+                    const ul = document.createElement('ul'); 
+                    ul.className = 'space-y-1'; 
+                    items.forEach(item => { 
+                        const li = document.createElement('li'); 
+                        li.className = `flex items-start text-xs ${item.concluido ? 'completed-item' : ''}`; 
+                        li.innerHTML = `
+                            <input type="checkbox" id="${item.id}-split" data-livro="${currentChapter.livroIndex}" data-capitulo="${currentChapter.capituloIndex}" data-key="${section.key}" data-itemid="${item.id}" ${item.concluido ? 'checked' : ''} class="mr-2 mt-0.5 h-3 w-3 rounded border-gray-300 text-emerald-500 focus:ring-emerald-400 cursor-pointer">
+                            <label for="${item.id}-split" class="text-gray-700 cursor-pointer leading-tight">${item.texto}</label>
+                        `; 
+                        const checkbox = li.querySelector('input[type="checkbox"]'); 
+                        if(checkbox) { 
+                            checkbox.addEventListener('change', handleCheckboxChange); 
+                        } 
+                        ul.appendChild(li); 
+                    }); 
+                    sectionDiv.appendChild(ul); 
+                    contentDiv.appendChild(sectionDiv); 
+                } 
+            });
         }
         
         function loadChapterAnnotations() {
@@ -1036,16 +1200,16 @@
                 showPdfButton.addEventListener('click', showPdfViewer);
             }
             
-            if(closePdfButton) {
-                closePdfButton.addEventListener('click', hidePdfViewer);
+            if(hidePdfButton) {
+                hidePdfButton.addEventListener('click', hidePdfViewer);
             }
             
-            if(toggleAnnotationsButton) {
-                toggleAnnotationsButton.addEventListener('click', toggleAnnotationsPanel);
+            if(prevPageButton) {
+                prevPageButton.addEventListener('click', prevPage);
             }
             
-            if(closeAnnotationsButton) {
-                closeAnnotationsButton.addEventListener('click', hideAnnotationsPanel);
+            if(nextPageButton) {
+                nextPageButton.addEventListener('click', nextPage);
             }
             
             // Auto-save para anotações
